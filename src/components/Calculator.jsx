@@ -25,6 +25,8 @@ export default function Calculator({ lang = 'en' }) {
         extraLabel: 'Extra sections or pages',
         extraPlaceholder: '0',
         resultLabel: 'Estimated range',
+        disclaimer:
+          'Indicative only — not a binding offer. Final scope and price are agreed in writing.',
         cta: 'Get exact quote',
         ctaSub: 'Email us with your project details for a fixed proposal.',
       }
@@ -36,6 +38,8 @@ export default function Calculator({ lang = 'en' }) {
         extraLabel: '额外区块或页面数量',
         extraPlaceholder: '0',
         resultLabel: '估算区间',
+        disclaimer:
+          '仅供参考，不构成正式报价；最终范围与价格以书面约定为准。',
         cta: '获取正式报价',
         ctaSub: '发邮件说明项目需求，我们会给出固定报价与周期。',
       }
@@ -101,6 +105,7 @@ export default function Calculator({ lang = 'en' }) {
               ${min.toLocaleString()} – ${max.toLocaleString()} USD
             </span>
           </div>
+          <p className="calc-disclaimer">{t.disclaimer}</p>
         </div>
 
         <div className="calc-cta">

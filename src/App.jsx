@@ -35,6 +35,14 @@ export default function App() {
           <p className="footer-text">
             © {new Date().getFullYear()} PixelLayer L.L.C —{' '}
             <a href="mailto:pixellayer7@gmail.com">pixellayer7@gmail.com</a>
+            {' · '}
+            <a
+              href="https://github.com/pixellayer7-jpg/1"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Main site repo
+            </a>
           </p>
         </div>
       </footer>

@@ -212,6 +212,13 @@ button {
   color: var(--accent);
 }
 
+.calc-disclaimer {
+  margin-top: 1rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
 .calc-cta {
   text-align: center;
 }
