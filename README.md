@@ -6,7 +6,9 @@ A small React app that gives clients an **estimated price range** for common pro
 ![Vite](https://img.shields.io/badge/Vite-5-646cff?logo=vite)
 [![CI](https://github.com/pixellayer7-jpg/project-estimator/actions/workflows/ci.yml/badge.svg)](https://github.com/pixellayer7-jpg/project-estimator/actions/workflows/ci.yml)
 
-- **EN / 中文** — Language toggle in the header.
+- **EN / 中文** — Language toggle in the header (choice is saved in `localStorage`).
+- **Email pre-fill** — “Email this estimate” opens the mail client with subject + body listing project type, add-ons, extras, and USD range.
+- **Copy summary** — One-click copy of the same text for WeChat / other channels.
 - **Config-driven** — Edit `src/data/pricing.js` to change base prices and add-ons (no code logic changes needed).
 
 ## For clients / 给客户
