@@ -1,17 +1,36 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { projectTypes, addOns, calculateQuote } from '../data/pricing'
 import { buildMailtoHref, buildQuoteSummary } from '../utils/quoteSummary'
+import {
+  clearEstimatorForm,
+  loadEstimatorForm,
+  saveEstimatorForm,
+} from '../utils/storage'
 
 const isEn = (lang) => lang === 'en'
 
 const EMAIL = 'pixellayer7@gmail.com'
 
+const defaultForm = {
+  projectType: 'landing',
+  addOnIds: [],
+  extraSections: '0',
+}
+
 export default function Calculator({ lang = 'en' }) {
-  const [projectType, setProjectType] = useState('landing')
-  const [addOnIds, setAddOnIds] = useState([])
-  const [extraSections, setExtraSections] = useState('0')
+  const [form, setForm] = useState(() => ({
+    ...defaultForm,
+    ...(loadEstimatorForm() ?? {}),
+  }))
   const [copyState, setCopyState] = useState('idle')
+  const [copyAnnounce, setCopyAnnounce] = useState('')
   const projectBtnRefs = useRef([])
+
+  const { projectType, addOnIds, extraSections } = form
+
+  useEffect(() => {
+    saveEstimatorForm(form)
+  }, [form])
 
   const { min, max } = calculateQuote(projectType, addOnIds, extraSections, lang)
 
@@ -24,6 +43,8 @@ export default function Calculator({ lang = 'en' }) {
     max
   )
 
+  const currentType = projectTypes.find((p) => p.id === projectType)
+
   const subject =
     lang === 'en'
       ? 'Project quote request — PixelLayer L.L.C'
@@ -31,16 +52,21 @@ export default function Calculator({ lang = 'en' }) {
 
   const mailtoHref = buildMailtoHref(EMAIL, subject, summary)
 
+  const setProjectType = (id) =>
+    setForm((f) => ({ ...f, projectType: id }))
+
   const toggleAddOn = (id) => {
-    setAddOnIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    )
+    setForm((f) => ({
+      ...f,
+      addOnIds: f.addOnIds.includes(id)
+        ? f.addOnIds.filter((x) => x !== id)
+        : [...f.addOnIds, id],
+    }))
   }
 
   function handleReset() {
-    setProjectType('landing')
-    setAddOnIds([])
-    setExtraSections('0')
+    clearEstimatorForm()
+    setForm({ ...defaultForm })
   }
 
   function handleProjectKeyDown(e, index) {
@@ -61,14 +87,33 @@ export default function Calculator({ lang = 'en' }) {
     projectBtnRefs.current[next]?.focus()
   }
 
+  function handleDownloadTxt() {
+    const blob = new Blob([summary], { type: 'text/plain;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'pixellayer-quote-summary.txt'
+    a.rel = 'noopener'
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   async function handleCopySummary() {
     try {
       await navigator.clipboard.writeText(summary)
       setCopyState('ok')
-      setTimeout(() => setCopyState('idle'), 2000)
+      setCopyAnnounce(isEn(lang) ? 'Summary copied to clipboard' : '摘要已复制到剪贴板')
+      setTimeout(() => {
+        setCopyState('idle')
+        setCopyAnnounce('')
+      }, 2000)
     } catch {
       setCopyState('fail')
-      setTimeout(() => setCopyState('idle'), 2000)
+      setCopyAnnounce(isEn(lang) ? 'Copy failed' : '复制失败')
+      setTimeout(() => {
+        setCopyState('idle')
+        setCopyAnnounce('')
+      }, 2000)
     }
   }
 
@@ -91,6 +136,9 @@ export default function Calculator({ lang = 'en' }) {
         copyFailed: 'Copy failed',
         previewTitle: 'Preview email body',
         copyAria: 'Copy estimate summary to clipboard',
+        downloadTxt: 'Download .txt',
+        downloadAria: 'Download estimate summary as a text file',
+        persistedHint: 'Your choices are saved on this device until you reset.',
       }
     : {
         title: '获取项目报价估算',
@@ -110,7 +158,14 @@ export default function Calculator({ lang = 'en' }) {
         copyFailed: '复制失败',
         previewTitle: '预览邮件正文',
         copyAria: '将估算摘要复制到剪贴板',
+        downloadTxt: '下载 .txt',
+        downloadAria: '将估算摘要下载为文本文件',
+        persistedHint: '选项会保存在本机浏览器中，直到你点击重置。',
       }
+
+  const timelineText =
+    currentType &&
+    (isEn(lang) ? currentType.timelineEn : currentType.timelineZh)
 
   return (
     <section className="calc" aria-labelledby="calc-title">
@@ -119,8 +174,13 @@ export default function Calculator({ lang = 'en' }) {
           {t.title}
         </h2>
         <p className="section-subtitle">{t.subtitle}</p>
+        <p className="calc-persist-hint">{t.persistedHint}</p>
 
-        <div className="calc-card">
+        <span className="sr-only" aria-live="assertive" aria-atomic="true">
+          {copyAnnounce}
+        </span>
+
+        <div className="calc-card print-area">
           <fieldset className="calc-fieldset">
             <legend className="calc-label">{t.projectLabel}</legend>
             <div
@@ -146,6 +206,11 @@ export default function Calculator({ lang = 'en' }) {
                 </button>
               ))}
             </div>
+            {timelineText && (
+              <p className="calc-timeline" aria-live="polite">
+                {timelineText}
+              </p>
+            )}
           </fieldset>
 
           <div className="calc-row">
@@ -180,7 +245,9 @@ export default function Calculator({ lang = 'en' }) {
               min="0"
               max="20"
               value={extraSections}
-              onChange={(e) => setExtraSections(e.target.value)}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, extraSections: e.target.value }))
+              }
               className="calc-input"
               placeholder={t.extraPlaceholder}
               inputMode="numeric"
@@ -193,7 +260,7 @@ export default function Calculator({ lang = 'en' }) {
             </p>
           </div>
 
-          <div className="calc-actions">
+          <div className="calc-actions no-print">
             <button type="button" className="btn-ghost" onClick={handleReset}>
               {t.reset}
             </button>
@@ -209,6 +276,14 @@ export default function Calculator({ lang = 'en' }) {
                   ? t.copyFailed
                   : t.copySummary}
             </button>
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={handleDownloadTxt}
+              aria-label={t.downloadAria}
+            >
+              {t.downloadTxt}
+            </button>
           </div>
 
           <div className="calc-result">
@@ -219,7 +294,7 @@ export default function Calculator({ lang = 'en' }) {
           </div>
           <p className="calc-disclaimer">{t.disclaimer}</p>
 
-          <details className="calc-preview">
+          <details className="calc-preview no-print">
             <summary className="calc-preview-summary">{t.previewTitle}</summary>
             <pre className="calc-preview-body" tabIndex={0}>
               {summary}
@@ -227,7 +302,7 @@ export default function Calculator({ lang = 'en' }) {
           </details>
         </div>
 
-        <div className="calc-cta">
+        <div className="calc-cta no-print">
           <a href={mailtoHref} className="btn btn-primary">
             {t.cta}
           </a>

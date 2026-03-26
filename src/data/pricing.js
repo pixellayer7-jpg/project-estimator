@@ -8,6 +8,8 @@ export const projectTypes = [
     labelZh: '落地页',
     min: 800,
     max: 1200,
+    timelineEn: 'Typical timeline: 1–2 weeks',
+    timelineZh: '常见周期：约 1–2 周',
   },
   {
     id: 'website',
@@ -15,6 +17,8 @@ export const projectTypes = [
     labelZh: '企业 / 工作室官网',
     min: 1500,
     max: 2800,
+    timelineEn: 'Typical timeline: 2–4 weeks',
+    timelineZh: '常见周期：约 2–4 周',
   },
   {
     id: 'dashboard',
@@ -22,6 +26,8 @@ export const projectTypes = [
     labelZh: '数据看板 / Web 应用界面',
     min: 2200,
     max: 4500,
+    timelineEn: 'Typical timeline: 3–6 weeks',
+    timelineZh: '常见周期：约 3–6 周',
   },
 ]
 

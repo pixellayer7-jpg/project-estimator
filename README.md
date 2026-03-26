@@ -12,6 +12,10 @@ A small React app that gives clients an **estimated price range** for common pro
 - **Preview** — Expandable block shows the exact text that will appear in the email body.
 - **Keyboard** — Arrow keys / Home / End move between project types when focused.
 - **i18n** — `document` `lang` and page title update when switching EN / 中文.
+- **Persistence** — Project type, add-ons, and extra sections are saved in `localStorage` until reset.
+- **Timeline hints** — Typical delivery window per project type (editable in `pricing.js`).
+- **Download** — Export the same summary as `pixellayer-quote-summary.txt`.
+- **Print** — Print-friendly styles for the estimate card; interactive chrome hidden when printing.
 - **Config-driven** — Edit `src/data/pricing.js` to change base prices and add-ons (no code logic changes needed).
 
 ## For clients / 给客户

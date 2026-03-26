@@ -12,25 +12,29 @@ export function buildQuoteSummary(lang, projectTypeId, addOnIds, extraSections, 
 
   const sections = Math.max(0, parseInt(extraSections, 10) || 0)
 
+  const timelineLine = type ? (en ? type.timelineEn : type.timelineZh) : null
+
   if (en) {
-    return [
+    const lines = [
       `Project type: ${typeLabel}`,
       `Add-ons: ${addOnLabels.length ? addOnLabels.join('; ') : 'None'}`,
       `Extra sections/pages: ${sections}`,
       `Estimated range: $${min.toLocaleString()} – $${max.toLocaleString()} USD`,
-      '',
-      'Timeline, budget, and reference links:',
-    ].join('\n')
+    ]
+    if (timelineLine) lines.push(timelineLine)
+    lines.push('', 'Timeline, budget, and reference links:')
+    return lines.join('\n')
   }
 
-  return [
+  const zhLines = [
     `项目类型：${typeLabel}`,
     `附加项：${addOnLabels.length ? addOnLabels.join('；') : '无'}`,
     `额外区块/页面：${sections}`,
     `估算区间：$${min.toLocaleString()} – $${max.toLocaleString()} USD`,
-    '',
-    '请补充：期望上线时间、预算范围、参考链接等：',
-  ].join('\n')
+  ]
+  if (timelineLine) zhLines.push(timelineLine)
+  zhLines.push('', '请补充：期望上线时间、预算范围、参考链接等：')
+  return zhLines.join('\n')
 }
 
 export function buildMailtoHref(email, subject, body) {

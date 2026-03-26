@@ -35,7 +35,7 @@ export default function App() {
       <header className="header">
         <div className="container header-inner">
           <a href="#" className="logo">PixelLayer L.L.C</a>
-          <div className="lang-switch" role="group" aria-label={lang === 'en' ? 'Language' : '语言'}>
+          <div className="lang-switch no-print" role="group" aria-label={lang === 'en' ? 'Language' : '语言'}>
             <button
               type="button"
               className={`lang-btn ${lang === 'en' ? 'active' : ''}`}
