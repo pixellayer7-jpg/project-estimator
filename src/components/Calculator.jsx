@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { projectTypes, addOns, calculateQuote } from '../data/pricing'
 import { buildMailtoHref, buildQuoteSummary } from '../utils/quoteSummary'
 
@@ -11,6 +11,7 @@ export default function Calculator({ lang = 'en' }) {
   const [addOnIds, setAddOnIds] = useState([])
   const [extraSections, setExtraSections] = useState('0')
   const [copyState, setCopyState] = useState('idle')
+  const projectBtnRefs = useRef([])
 
   const { min, max } = calculateQuote(projectType, addOnIds, extraSections, lang)
 
@@ -42,6 +43,24 @@ export default function Calculator({ lang = 'en' }) {
     setExtraSections('0')
   }
 
+  function handleProjectKeyDown(e, index) {
+    let next = index
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      next = (index + 1) % projectTypes.length
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      next = (index - 1 + projectTypes.length) % projectTypes.length
+    } else if (e.key === 'Home') {
+      next = 0
+    } else if (e.key === 'End') {
+      next = projectTypes.length - 1
+    } else {
+      return
+    }
+    e.preventDefault()
+    setProjectType(projectTypes[next].id)
+    projectBtnRefs.current[next]?.focus()
+  }
+
   async function handleCopySummary() {
     try {
       await navigator.clipboard.writeText(summary)
@@ -70,6 +89,8 @@ export default function Calculator({ lang = 'en' }) {
         copySummary: 'Copy summary',
         copied: 'Copied!',
         copyFailed: 'Copy failed',
+        previewTitle: 'Preview email body',
+        copyAria: 'Copy estimate summary to clipboard',
       }
     : {
         title: '获取项目报价估算',
@@ -87,6 +108,8 @@ export default function Calculator({ lang = 'en' }) {
         copySummary: '复制摘要',
         copied: '已复制',
         copyFailed: '复制失败',
+        previewTitle: '预览邮件正文',
+        copyAria: '将估算摘要复制到剪贴板',
       }
 
   return (
@@ -105,14 +128,19 @@ export default function Calculator({ lang = 'en' }) {
               role="radiogroup"
               aria-label={t.projectLabel}
             >
-              {projectTypes.map((p) => (
+              {projectTypes.map((p, index) => (
                 <button
                   key={p.id}
+                  ref={(el) => {
+                    projectBtnRefs.current[index] = el
+                  }}
                   type="button"
                   role="radio"
                   aria-checked={projectType === p.id}
+                  tabIndex={projectType === p.id ? 0 : -1}
                   className={`calc-option ${projectType === p.id ? 'active' : ''}`}
                   onClick={() => setProjectType(p.id)}
+                  onKeyDown={(e) => handleProjectKeyDown(e, index)}
                 >
                   {isEn(lang) ? p.labelEn : p.labelZh}
                 </button>
@@ -124,16 +152,20 @@ export default function Calculator({ lang = 'en' }) {
             <fieldset className="calc-fieldset">
               <legend className="calc-label">{t.addOnsLabel}</legend>
               <div className="calc-checkboxes">
-                {addOns.map((a) => (
-                  <label key={a.id} className="calc-check">
-                    <input
-                      type="checkbox"
-                      checked={addOnIds.includes(a.id)}
-                      onChange={() => toggleAddOn(a.id)}
-                    />
-                    <span>{isEn(lang) ? a.labelEn : a.labelZh}</span>
-                  </label>
-                ))}
+                {addOns.map((a) => {
+                  const cid = `addon-${a.id}`
+                  return (
+                    <label key={a.id} className="calc-check" htmlFor={cid}>
+                      <input
+                        id={cid}
+                        type="checkbox"
+                        checked={addOnIds.includes(a.id)}
+                        onChange={() => toggleAddOn(a.id)}
+                      />
+                      <span>{isEn(lang) ? a.labelEn : a.labelZh}</span>
+                    </label>
+                  )
+                })}
               </div>
             </fieldset>
           </div>
@@ -165,7 +197,12 @@ export default function Calculator({ lang = 'en' }) {
             <button type="button" className="btn-ghost" onClick={handleReset}>
               {t.reset}
             </button>
-            <button type="button" className="btn-ghost" onClick={handleCopySummary}>
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={handleCopySummary}
+              aria-label={t.copyAria}
+            >
               {copyState === 'ok'
                 ? t.copied
                 : copyState === 'fail'
@@ -181,6 +218,13 @@ export default function Calculator({ lang = 'en' }) {
             </span>
           </div>
           <p className="calc-disclaimer">{t.disclaimer}</p>
+
+          <details className="calc-preview">
+            <summary className="calc-preview-summary">{t.previewTitle}</summary>
+            <pre className="calc-preview-body" tabIndex={0}>
+              {summary}
+            </pre>
+          </details>
         </div>
 
         <div className="calc-cta">

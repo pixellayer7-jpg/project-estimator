@@ -9,6 +9,9 @@ A small React app that gives clients an **estimated price range** for common pro
 - **EN / 中文** — Language toggle in the header (choice is saved in `localStorage`).
 - **Email pre-fill** — “Email this estimate” opens the mail client with subject + body listing project type, add-ons, extras, and USD range.
 - **Copy summary** — One-click copy of the same text for WeChat / other channels.
+- **Preview** — Expandable block shows the exact text that will appear in the email body.
+- **Keyboard** — Arrow keys / Home / End move between project types when focused.
+- **i18n** — `document` `lang` and page title update when switching EN / 中文.
 - **Config-driven** — Edit `src/data/pricing.js` to change base prices and add-ons (no code logic changes needed).
 
 ## For clients / 给客户

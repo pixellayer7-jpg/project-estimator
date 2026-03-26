@@ -20,6 +20,11 @@ export default function App() {
     } catch {
       /* ignore */
     }
+    document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en'
+    document.title =
+      lang === 'zh'
+        ? '项目报价计算器 — PixelLayer L.L.C'
+        : 'Project Quote Calculator — PixelLayer L.L.C'
   }, [lang])
 
   return (
