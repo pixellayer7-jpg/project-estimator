@@ -10,7 +10,10 @@ export function buildQuoteSummary(lang, projectTypeId, addOnIds, extraSections, 
     .filter(Boolean)
     .map((a) => (en ? a.labelEn : a.labelZh))
 
-  const sections = Math.max(0, parseInt(extraSections, 10) || 0)
+  const raw = parseInt(extraSections, 10)
+  const sections = Number.isFinite(raw)
+    ? Math.min(20, Math.max(0, raw))
+    : 0
 
   const timelineLine = type ? (en ? type.timelineEn : type.timelineZh) : null
 

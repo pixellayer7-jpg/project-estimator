@@ -17,6 +17,12 @@ const defaultForm = {
   extraSections: '0',
 }
 
+function clampExtraSectionsString(raw) {
+  const n = parseInt(String(raw), 10)
+  if (!Number.isFinite(n)) return '0'
+  return String(Math.min(20, Math.max(0, n)))
+}
+
 export default function Calculator({ lang = 'en' }) {
   const [form, setForm] = useState(() => ({
     ...defaultForm,
@@ -241,12 +247,19 @@ export default function Calculator({ lang = 'en' }) {
             </label>
             <input
               id="extra-sections"
+              name="extraSections"
               type="number"
               min="0"
               max="20"
               value={extraSections}
               onChange={(e) =>
                 setForm((f) => ({ ...f, extraSections: e.target.value }))
+              }
+              onBlur={() =>
+                setForm((f) => ({
+                  ...f,
+                  extraSections: clampExtraSectionsString(f.extraSections),
+                }))
               }
               className="calc-input"
               placeholder={t.extraPlaceholder}

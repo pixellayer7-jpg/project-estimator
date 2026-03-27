@@ -16,6 +16,8 @@ A small React app that gives clients an **estimated price range** for common pro
 - **Timeline hints** — Typical delivery window per project type (editable in `pricing.js`).
 - **Download** — Export the same summary as `pixellayer-quote-summary.txt`.
 - **Print** — Print-friendly styles for the estimate card; interactive chrome hidden when printing.
+- **Validation** — Extra sections are clamped to 0–20 in logic, on blur in the UI, and in quote/summary math.
+- **Header** — Link to this repository on GitHub.
 - **Config-driven** — Edit `src/data/pricing.js` to change base prices and add-ons (no code logic changes needed).
 
 ## For clients / 给客户

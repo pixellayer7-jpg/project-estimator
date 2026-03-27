@@ -35,23 +35,33 @@ export default function App() {
       <header className="header">
         <div className="container header-inner">
           <a href="#" className="logo">PixelLayer L.L.C</a>
-          <div className="lang-switch no-print" role="group" aria-label={lang === 'en' ? 'Language' : '语言'}>
-            <button
-              type="button"
-              className={`lang-btn ${lang === 'en' ? 'active' : ''}`}
-              onClick={() => setLang('en')}
-              aria-pressed={lang === 'en'}
+          <div className="header-actions no-print">
+            <a
+              href="https://github.com/pixellayer7-jpg/project-estimator"
+              className="header-link"
+              target="_blank"
+              rel="noopener noreferrer"
             >
-              EN
-            </button>
-            <button
-              type="button"
-              className={`lang-btn ${lang === 'zh' ? 'active' : ''}`}
-              onClick={() => setLang('zh')}
-              aria-pressed={lang === 'zh'}
-            >
-              中文
-            </button>
+              {lang === 'en' ? 'GitHub' : '本工具仓库'}
+            </a>
+            <div className="lang-switch" role="group" aria-label={lang === 'en' ? 'Language' : '语言'}>
+              <button
+                type="button"
+                className={`lang-btn ${lang === 'en' ? 'active' : ''}`}
+                onClick={() => setLang('en')}
+                aria-pressed={lang === 'en'}
+              >
+                EN
+              </button>
+              <button
+                type="button"
+                className={`lang-btn ${lang === 'zh' ? 'active' : ''}`}
+                onClick={() => setLang('zh')}
+                aria-pressed={lang === 'zh'}
+              >
+                中文
+              </button>
+            </div>
           </div>
         </div>
       </header>

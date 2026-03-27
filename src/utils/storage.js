@@ -2,9 +2,10 @@ import { projectTypes, addOns } from '../data/pricing'
 
 const STORAGE_KEY = 'pixellayer-estimator-form'
 
-function isValidExtra(s) {
-  const n = parseInt(s, 10)
-  return Number.isFinite(n) && n >= 0 && n <= 20
+function normalizeExtraSections(raw) {
+  const n = parseInt(String(raw), 10)
+  if (!Number.isFinite(n)) return '0'
+  return String(Math.min(20, Math.max(0, n)))
 }
 
 export function loadEstimatorForm() {
@@ -18,8 +19,7 @@ export function loadEstimatorForm() {
     const addOnIds = Array.isArray(p.addOnIds)
       ? p.addOnIds.filter((id) => addOns.some((a) => a.id === id))
       : []
-    const extra = p.extraSections != null ? String(p.extraSections) : '0'
-    const extraSections = isValidExtra(extra) ? String(parseInt(extra, 10)) : '0'
+    const extraSections = normalizeExtraSections(p.extraSections)
     return {
       projectType: p.projectType,
       addOnIds,
