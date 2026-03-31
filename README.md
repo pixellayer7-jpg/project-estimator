@@ -40,7 +40,11 @@ npm install
 npm run dev    # http://localhost:5173
 npm run build
 npm run preview
+npm test       # Vitest: calculateQuote, quoteSummary, Calculator interactions
+npm run test:watch
 ```
+
+Tests live next to sources (`*.test.js` / `*.test.jsx`). CI runs `npm test` before `npm run build`.
 
 ## Deploy
 

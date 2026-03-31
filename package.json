@@ -1,7 +1,7 @@
 {
   "name": "project-estimator",
   "private": true,
-  "version": "1.6.0",
+  "version": "1.7.0",
   "description": "PixelLayer L.L.C — Project quote calculator for frontend & web development.",
   "type": "module",
   "author": "PixelLayer L.L.C",
@@ -12,14 +12,21 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.0.1",
+    "@testing-library/user-event": "^14.5.2",
     "@vitejs/plugin-react": "^4.2.1",
-    "vite": "^5.0.0"
+    "jsdom": "^25.0.1",
+    "vite": "^5.0.0",
+    "vitest": "^2.1.9"
   }
 }
