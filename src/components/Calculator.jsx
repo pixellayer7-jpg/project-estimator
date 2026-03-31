@@ -35,7 +35,8 @@ export default function Calculator({ lang = 'en' }) {
   const { projectType, addOnIds, extraSections } = form
 
   useEffect(() => {
-    saveEstimatorForm(form)
+    const id = window.setTimeout(() => saveEstimatorForm(form), 400)
+    return () => window.clearTimeout(id)
   }, [form])
 
   const { min, max } = calculateQuote(projectType, addOnIds, extraSections, lang)
@@ -72,7 +73,9 @@ export default function Calculator({ lang = 'en' }) {
 
   function handleReset() {
     clearEstimatorForm()
-    setForm({ ...defaultForm })
+    const next = { ...defaultForm }
+    setForm(next)
+    saveEstimatorForm(next)
   }
 
   function handleProjectKeyDown(e, index) {
@@ -301,7 +304,11 @@ export default function Calculator({ lang = 'en' }) {
 
           <div className="calc-result">
             <span className="calc-result-label">{t.resultLabel}</span>
-            <span className="calc-result-value" aria-live="polite">
+            <span
+              key={`${min}-${max}`}
+              className="calc-result-value"
+              aria-live="polite"
+            >
               ${min.toLocaleString()} – ${max.toLocaleString()} USD
             </span>
           </div>

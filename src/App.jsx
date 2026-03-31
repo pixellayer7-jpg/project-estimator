@@ -32,7 +32,7 @@ export default function App() {
       <a href="#main-content" className="skip-link">
         {lang === 'en' ? 'Skip to calculator' : '跳到计算器'}
       </a>
-      <header className="header">
+      <header className="header" role="banner">
         <div className="container header-inner">
           <a href="#" className="logo">PixelLayer L.L.C</a>
           <div className="header-actions no-print">
@@ -68,7 +68,7 @@ export default function App() {
       <main id="main-content">
         <Calculator lang={lang} />
       </main>
-      <footer className="footer">
+      <footer className="footer" role="contentinfo">
         <div className="container">
           <p className="footer-text">
             © {new Date().getFullYear()} PixelLayer L.L.C —{' '}
