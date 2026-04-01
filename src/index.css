@@ -66,6 +66,10 @@ input:focus-visible {
   outline: none;
 }
 
+.skip-link--second:focus {
+  top: 3rem;
+}
+
 .container {
   max-width: 720px;
   margin: 0 auto;
@@ -420,6 +424,85 @@ input:focus-visible {
   color: var(--text-muted);
 }
 
+/* Contact (Formspree) */
+.contact-section {
+  padding: 2.5rem 0 1rem;
+  border-top: 1px solid var(--border);
+  margin-top: 2rem;
+}
+
+.contact-form {
+  margin-top: 1.25rem;
+  padding: 1.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.contact-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.contact-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-top: 0.5rem;
+}
+
+.contact-label:first-of-type {
+  margin-top: 0;
+}
+
+.contact-input,
+.contact-textarea {
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  font: inherit;
+  font-size: 1rem;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.contact-textarea {
+  resize: vertical;
+  min-height: 6rem;
+}
+
+.contact-actions {
+  margin-top: 1.25rem;
+}
+
+.contact-submit {
+  min-height: 48px;
+}
+
+.contact-feedback {
+  margin-top: 1rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.contact-feedback--ok {
+  color: #4ade80;
+}
+
+.contact-feedback--err {
+  color: #f87171;
+}
+
+.contact-privacy {
+  margin-top: 1rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
 /* Footer */
 .footer {
   border-top: 1px solid var(--border);
@@ -466,6 +549,7 @@ input:focus-visible {
 
   .no-print,
   .skip-link,
+  .skip-link--second,
   .header-actions {
     display: none !important;
   }

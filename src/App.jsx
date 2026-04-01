@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import Calculator from './components/Calculator'
+import ContactForm from './components/ContactForm'
 
 const LANG_KEY = 'pixellayer-estimator-lang'
 
@@ -31,6 +32,9 @@ export default function App() {
     <>
       <a href="#main-content" className="skip-link">
         {lang === 'en' ? 'Skip to calculator' : '跳到计算器'}
+      </a>
+      <a href="#contact" className="skip-link skip-link--second">
+        {lang === 'en' ? 'Skip to contact form' : '跳到留言表单'}
       </a>
       <header className="header" role="banner">
         <div className="container header-inner">
@@ -67,6 +71,7 @@ export default function App() {
       </header>
       <main id="main-content">
         <Calculator lang={lang} />
+        <ContactForm lang={lang} />
       </main>
       <footer className="footer" role="contentinfo">
         <div className="container">

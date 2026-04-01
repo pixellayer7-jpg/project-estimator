@@ -5,6 +5,7 @@ A small React app that gives clients an **estimated price range** for common pro
 ![React](https://img.shields.io/badge/React-18-61dafb?logo=react)
 ![Vite](https://img.shields.io/badge/Vite-5-646cff?logo=vite)
 [![CI](https://github.com/pixellayer7-jpg/project-estimator/actions/workflows/ci.yml/badge.svg)](https://github.com/pixellayer7-jpg/project-estimator/actions/workflows/ci.yml)
+[![Pages](https://github.com/pixellayer7-jpg/project-estimator/actions/workflows/pages.yml/badge.svg)](https://github.com/pixellayer7-jpg/project-estimator/actions/workflows/pages.yml)
 
 - **EN / 中文** — Language toggle in the header (choice is saved in `localStorage`).
 - **Email pre-fill** — “Email this estimate” opens the mail client with subject + body listing project type, add-ons, extras, and USD range.
@@ -20,6 +21,8 @@ A small React app that gives clients an **estimated price range** for common pro
 - **Header** — Link to this repository on GitHub.
 - **Landmarks** — `banner` / `contentinfo` roles for assistive tech; Twitter Card meta for sharing.
 - **Config-driven** — Edit `src/data/pricing.js` to change base prices and add-ons (no code logic changes needed).
+- **SEO (deploy)** — Set `VITE_SITE_URL` at build time to inject `rel=canonical`, `og:url`, and `twitter:url` (see [Deploy](#deploy)).
+- **Contact form (optional)** — Set `VITE_FORMSPREE_FORM_ID` to show a Formspree-powered message form below the calculator (no mail client required).
 
 ## For clients / 给客户
 
@@ -48,7 +51,23 @@ Tests live next to sources (`*.test.js` / `*.test.jsx`). CI runs `npm test` befo
 
 ## Deploy
 
-- **Vercel / Netlify**: connect this repo, build `npm run build`, output `dist`.
+Copy `.env.example` to `.env.production.local` (or configure vars in the host UI). Do **not** commit real secrets.
+
+| Variable | Purpose |
+|----------|---------|
+| `VITE_SITE_URL` | Public origin **without** trailing slash, e.g. `https://pixellayer7-jpg.github.io/project-estimator` or `https://your-app.vercel.app`. Injected at build as canonical + Open Graph / Twitter URL. |
+| `VITE_FORMSPREE_FORM_ID` | Formspree form id (from `https://formspree.io/f/<id>`). If empty, the contact section is hidden. |
+
+### GitHub Pages
+
+1. Repo **Settings → Pages → Build and deployment**: source **GitHub Actions**.
+2. Optional: **Settings → Secrets and variables → Actions** → add `FORMSPREE_FORM_ID` so the deployed site shows the form.
+3. Push to `main`: workflow [`.github/workflows/pages.yml`](./.github/workflows/pages.yml) runs tests, builds with `VITE_SITE_URL` set to this repo’s Pages URL, and publishes `dist`.  
+   If you fork or rename the repo, update `VITE_SITE_URL` in that workflow file.
+
+### Vercel / Netlify
+
+Connect the repo, set **build** `npm run build`, output **`dist`**. Add environment variables `VITE_SITE_URL` and `VITE_FORMSPREE_FORM_ID` for **Production** (and Preview if you want the form there).
 
 ## Customize prices
 
