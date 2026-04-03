@@ -39,7 +39,7 @@ export default function Calculator({ lang = 'en' }) {
     return () => window.clearTimeout(id)
   }, [form])
 
-  const { min, max } = calculateQuote(projectType, addOnIds, extraSections, lang)
+  const { min, max } = calculateQuote(projectType, addOnIds, extraSections)
 
   const summary = buildQuoteSummary(
     lang,

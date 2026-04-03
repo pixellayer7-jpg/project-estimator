@@ -55,7 +55,7 @@ export const addOns = [
 /** Extra cost per additional section/page beyond base scope */
 export const extraSectionCost = { min: 80, max: 150 }
 
-export function calculateQuote(projectTypeId, selectedAddOnIds, extraSections, lang) {
+export function calculateQuote(projectTypeId, selectedAddOnIds, extraSections) {
   const type = projectTypes.find((t) => t.id === projectTypeId)
   if (!type) return { min: 0, max: 0 }
 

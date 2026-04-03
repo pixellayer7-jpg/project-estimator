@@ -43,11 +43,15 @@ npm install
 npm run dev    # http://localhost:5173
 npm run build
 npm run preview
-npm test       # Vitest: calculateQuote, quoteSummary, Calculator interactions
+npm run lint   # ESLint
+npm test       # Vitest: pricing, quoteSummary, storage, Calculator, ContactForm
 npm run test:watch
 ```
 
-Tests live next to sources (`*.test.js` / `*.test.jsx`). CI runs `npm test` before `npm run build`.
+Tests live next to sources (`*.test.js` / `*.test.jsx`). CI runs `npm run lint`, then `npm test`, then `npm run build`.
+
+- **Error boundary** — Uncaught render errors show a bilingual fallback with a reload button instead of a blank screen.
+- **ESLint** — `npm run lint` (React, hooks, refresh plugin; config in `eslint.config.js`).
 
 ## Deploy
 
