@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 export default function ContactForm({ lang }) {
   const formId = import.meta.env.VITE_FORMSPREE_FORM_ID
@@ -7,6 +7,13 @@ export default function ContactForm({ lang }) {
   const [email, setEmail] = useState('')
   const [message, setMessage] = useState('')
   const [status, setStatus] = useState('idle')
+  const statusRef = useRef(null)
+
+  useEffect(() => {
+    if (status === 'ok' && statusRef.current) {
+      statusRef.current.focus()
+    }
+  }, [status])
 
   if (!formId) return null
 
@@ -143,7 +150,12 @@ export default function ContactForm({ lang }) {
           </div>
 
           {status === 'ok' && (
-            <p className="contact-feedback contact-feedback--ok" role="status">
+            <p
+              ref={statusRef}
+              className="contact-feedback contact-feedback--ok"
+              role="status"
+              tabIndex={-1}
+            >
               {t.success}
             </p>
           )}

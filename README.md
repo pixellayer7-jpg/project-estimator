@@ -21,7 +21,7 @@ A small React app that gives clients an **estimated price range** for common pro
 - **Header** — Link to this repository on GitHub.
 - **Landmarks** — `banner` / `contentinfo` roles for assistive tech; Twitter Card meta for sharing.
 - **Config-driven** — Edit `src/data/pricing.js` to change base prices and add-ons (no code logic changes needed).
-- **SEO (deploy)** — Set `VITE_SITE_URL` at build time to inject `rel=canonical`, `og:url`, and `twitter:url` (see [Deploy](#deploy)).
+- **SEO (deploy)** — Set `VITE_SITE_URL` at build time to inject `rel=canonical`, `og:url`, `og:image` (site `favicon.svg`), and matching Twitter tags (see [Deploy](#deploy)).
 - **Contact form (optional)** — Set `VITE_FORMSPREE_FORM_ID` to show a Formspree-powered message form below the calculator (no mail client required).
 
 ## For clients / 给客户
@@ -59,7 +59,7 @@ Copy `.env.example` to `.env.production.local` (or configure vars in the host UI
 
 | Variable | Purpose |
 |----------|---------|
-| `VITE_SITE_URL` | Public origin **without** trailing slash, e.g. `https://pixellayer7-jpg.github.io/project-estimator` or `https://your-app.vercel.app`. Injected at build as canonical + Open Graph / Twitter URL. |
+| `VITE_SITE_URL` | Public origin **without** trailing slash, e.g. `https://pixellayer7-jpg.github.io/project-estimator` or `https://your-app.vercel.app`. Injected at build as canonical, Open Graph / Twitter URL, and **image** (`…/favicon.svg`). Some networks prefer PNG for previews; replace `public/favicon.svg` or extend `vite.config.js` if needed. |
 | `VITE_FORMSPREE_FORM_ID` | Formspree form id (from `https://formspree.io/f/<id>`). If empty, the contact section is hidden. |
 
 ### GitHub Pages

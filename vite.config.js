@@ -14,6 +14,7 @@ export default defineConfig(({ mode }) => {
         transformIndexHtml() {
           if (!siteUrl) return []
           const canonical = `${siteUrl}/`
+          const ogImage = `${siteUrl}/favicon.svg`
           return [
             {
               tag: 'link',
@@ -27,7 +28,17 @@ export default defineConfig(({ mode }) => {
             },
             {
               tag: 'meta',
+              attrs: { property: 'og:image', content: ogImage },
+              injectTo: 'head',
+            },
+            {
+              tag: 'meta',
               attrs: { name: 'twitter:url', content: canonical },
+              injectTo: 'head',
+            },
+            {
+              tag: 'meta',
+              attrs: { name: 'twitter:image', content: ogImage },
               injectTo: 'head',
             },
           ]

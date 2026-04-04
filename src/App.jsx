@@ -38,7 +38,9 @@ export default function App() {
       </a>
       <header className="header" role="banner">
         <div className="container header-inner">
-          <a href="#" className="logo">PixelLayer L.L.C</a>
+          <a href="#main-content" className="logo">
+            PixelLayer L.L.C
+          </a>
           <div className="header-actions no-print">
             <a
               href="https://github.com/pixellayer7-jpg/project-estimator"
