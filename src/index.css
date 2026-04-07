@@ -259,7 +259,9 @@ input:focus-visible {
   background: var(--bg);
   color: var(--text);
   border-radius: 8px;
-  transition: border-color 0.2s, background 0.2s;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
 }
 
 .calc-option:hover {
@@ -331,7 +333,9 @@ input:focus-visible {
   border: 1px solid var(--border);
   background: transparent;
   color: var(--text-muted);
-  transition: border-color 0.2s, color 0.2s;
+  transition:
+    border-color 0.2s,
+    color 0.2s;
 }
 
 .btn-ghost:hover {
@@ -442,7 +446,9 @@ input:focus-visible {
   border: none;
   background: var(--accent);
   color: white;
-  transition: background 0.2s, transform 0.1s;
+  transition:
+    background 0.2s,
+    transform 0.1s;
 }
 
 .calc-cta .btn:hover {

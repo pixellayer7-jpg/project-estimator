@@ -50,7 +50,11 @@ export default function App() {
             >
               {lang === 'en' ? 'GitHub' : '本工具仓库'}
             </a>
-            <div className="lang-switch" role="group" aria-label={lang === 'en' ? 'Language' : '语言'}>
+            <div
+              className="lang-switch"
+              role="group"
+              aria-label={lang === 'en' ? 'Language' : '语言'}
+            >
               <button
                 type="button"
                 className={`lang-btn ${lang === 'en' ? 'active' : ''}`}

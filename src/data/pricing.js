@@ -71,9 +71,7 @@ export function calculateQuote(projectTypeId, selectedAddOnIds, extraSections) {
   })
 
   const raw = parseInt(extraSections, 10)
-  const sections = Number.isFinite(raw)
-    ? Math.min(20, Math.max(0, raw))
-    : 0
+  const sections = Number.isFinite(raw) ? Math.min(20, Math.max(0, raw)) : 0
   min += sections * extraSectionCost.min
   max += sections * extraSectionCost.max
 

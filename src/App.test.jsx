@@ -33,9 +33,8 @@ describe('App', () => {
 
   it('logo links to main content', () => {
     render(<App />)
-    expect(screen.getByRole('link', { name: /PixelLayer L\.L\.C/i })).toHaveAttribute(
-      'href',
-      '#main-content'
-    )
+    expect(
+      screen.getByRole('link', { name: /PixelLayer L\.L\.C/i })
+    ).toHaveAttribute('href', '#main-content')
   })
 })

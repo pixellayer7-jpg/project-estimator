@@ -59,8 +59,7 @@ export default function Calculator({ lang = 'en' }) {
 
   const mailtoHref = buildMailtoHref(EMAIL, subject, summary)
 
-  const setProjectType = (id) =>
-    setForm((f) => ({ ...f, projectType: id }))
+  const setProjectType = (id) => setForm((f) => ({ ...f, projectType: id }))
 
   const toggleAddOn = (id) => {
     setForm((f) => ({
@@ -111,7 +110,9 @@ export default function Calculator({ lang = 'en' }) {
     try {
       await navigator.clipboard.writeText(summary)
       setCopyState('ok')
-      setCopyAnnounce(isEn(lang) ? 'Summary copied to clipboard' : '摘要已复制到剪贴板')
+      setCopyAnnounce(
+        isEn(lang) ? 'Summary copied to clipboard' : '摘要已复制到剪贴板'
+      )
       setTimeout(() => {
         setCopyState('idle')
         setCopyAnnounce('')
@@ -129,7 +130,8 @@ export default function Calculator({ lang = 'en' }) {
   const t = isEn(lang)
     ? {
         title: 'Get an estimated quote',
-        subtitle: 'Select your project type and options. Final price depends on scope and timeline.',
+        subtitle:
+          'Select your project type and options. Final price depends on scope and timeline.',
         projectLabel: 'Project type',
         addOnsLabel: 'Add-ons',
         extraLabel: 'Extra sections or pages',
@@ -138,7 +140,8 @@ export default function Calculator({ lang = 'en' }) {
         disclaimer:
           'Indicative only — not a binding offer. Final scope and price are agreed in writing.',
         cta: 'Email this estimate',
-        ctaSub: 'Your selections are pre-filled in the email body. Add details and send.',
+        ctaSub:
+          'Your selections are pre-filled in the email body. Add details and send.',
         reset: 'Reset',
         copySummary: 'Copy summary',
         copied: 'Copied!',
@@ -157,8 +160,7 @@ export default function Calculator({ lang = 'en' }) {
         extraLabel: '额外区块或页面数量',
         extraPlaceholder: '0',
         resultLabel: '估算区间',
-        disclaimer:
-          '仅供参考，不构成正式报价；最终范围与价格以书面约定为准。',
+        disclaimer: '仅供参考，不构成正式报价；最终范围与价格以书面约定为准。',
         cta: '用邮件发送此估算',
         ctaSub: '邮件正文已预填当前选项，可补充说明后发送。',
         reset: '重置',

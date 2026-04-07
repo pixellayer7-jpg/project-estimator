@@ -1,6 +1,13 @@
 import { projectTypes, addOns } from '../data/pricing'
 
-export function buildQuoteSummary(lang, projectTypeId, addOnIds, extraSections, min, max) {
+export function buildQuoteSummary(
+  lang,
+  projectTypeId,
+  addOnIds,
+  extraSections,
+  min,
+  max
+) {
   const en = lang === 'en'
   const type = projectTypes.find((p) => p.id === projectTypeId)
   const typeLabel = type ? (en ? type.labelEn : type.labelZh) : projectTypeId
@@ -11,9 +18,7 @@ export function buildQuoteSummary(lang, projectTypeId, addOnIds, extraSections, 
     .map((a) => (en ? a.labelEn : a.labelZh))
 
   const raw = parseInt(extraSections, 10)
-  const sections = Number.isFinite(raw)
-    ? Math.min(20, Math.max(0, raw))
-    : 0
+  const sections = Number.isFinite(raw) ? Math.min(20, Math.max(0, raw)) : 0
 
   const timelineLine = type ? (en ? type.timelineEn : type.timelineZh) : null
 

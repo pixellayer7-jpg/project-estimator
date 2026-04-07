@@ -7,6 +7,8 @@ A small React app that gives clients an **estimated price range** for common pro
 [![CI](https://github.com/pixellayer7-jpg/project-estimator/actions/workflows/ci.yml/badge.svg)](https://github.com/pixellayer7-jpg/project-estimator/actions/workflows/ci.yml)
 [![Pages](https://github.com/pixellayer7-jpg/project-estimator/actions/workflows/pages.yml/badge.svg)](https://github.com/pixellayer7-jpg/project-estimator/actions/workflows/pages.yml)
 
+**Live demo:** [https://pixellayer7-jpg.github.io/project-estimator/](https://pixellayer7-jpg.github.io/project-estimator/) — works after **Settings → Pages → GitHub Actions** is enabled and a deploy succeeds.
+
 - **EN / 中文** — Language toggle in the header (choice is saved in `localStorage`).
 - **Email pre-fill** — “Email this estimate” opens the mail client with subject + body listing project type, add-ons, extras, and USD range.
 - **Copy summary** — One-click copy of the same text for WeChat / other channels.
@@ -44,6 +46,8 @@ npm run dev    # http://localhost:5173
 npm run build
 npm run preview
 npm run lint   # ESLint
+npm run format # Prettier write
+npm run format:check
 npm test       # Vitest: pricing, quoteSummary, storage, Calculator, ContactForm
 npm run test:watch
 ```
@@ -57,10 +61,10 @@ Tests live next to sources (`*.test.js` / `*.test.jsx`). CI runs `npm run lint`,
 
 Copy `.env.example` to `.env.production.local` (or configure vars in the host UI). Do **not** commit real secrets.
 
-| Variable | Purpose |
-|----------|---------|
-| `VITE_SITE_URL` | Public origin **without** trailing slash, e.g. `https://pixellayer7-jpg.github.io/project-estimator` or `https://your-app.vercel.app`. Injected at build as canonical, Open Graph / Twitter URL, and **image** (`…/favicon.svg`). Some networks prefer PNG for previews; replace `public/favicon.svg` or extend `vite.config.js` if needed. |
-| `VITE_FORMSPREE_FORM_ID` | Formspree form id (from `https://formspree.io/f/<id>`). If empty, the contact section is hidden. |
+| Variable                 | Purpose                                                                                                                                                                                                                                                                                                                                     |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `VITE_SITE_URL`          | Public origin **without** trailing slash, e.g. `https://pixellayer7-jpg.github.io/project-estimator` or `https://your-app.vercel.app`. Injected at build as canonical, Open Graph / Twitter URL, and **image** (`…/favicon.svg`). Some networks prefer PNG for previews; replace `public/favicon.svg` or extend `vite.config.js` if needed. |
+| `VITE_FORMSPREE_FORM_ID` | Formspree form id (from `https://formspree.io/f/<id>`). If empty, the contact section is hidden.                                                                                                                                                                                                                                            |
 
 ### GitHub Pages
 

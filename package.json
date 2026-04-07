@@ -1,8 +1,16 @@
 {
   "name": "project-estimator",
   "private": true,
-  "version": "1.10.0",
+  "version": "1.11.0",
   "description": "PixelLayer L.L.C — Project quote calculator for frontend & web development.",
+  "keywords": [
+    "react",
+    "vite",
+    "calculator",
+    "quote",
+    "i18n",
+    "pixelLayer"
+  ],
   "type": "module",
   "author": "PixelLayer L.L.C",
   "repository": {
@@ -14,6 +22,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -29,9 +39,11 @@
     "@vitejs/plugin-react": "^4.2.1",
     "eslint": "^9.15.0",
     "eslint-plugin-react": "^7.37.2",
+    "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-react-hooks": "^5.0.0",
     "eslint-plugin-react-refresh": "^0.4.14",
     "globals": "^15.12.0",
+    "prettier": "^3.4.2",
     "jsdom": "^25.0.1",
     "vite": "^5.0.0",
     "vitest": "^2.1.9"

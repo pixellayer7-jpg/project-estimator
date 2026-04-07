@@ -37,7 +37,10 @@ describe('calculateQuote', () => {
   })
 
   it('treats non-numeric extraSections as 0', () => {
-    expect(calculateQuote('landing', [], 'abc')).toEqual({ min: 800, max: 1200 })
+    expect(calculateQuote('landing', [], 'abc')).toEqual({
+      min: 800,
+      max: 1200,
+    })
   })
 
   it('ignores unknown add-on ids', () => {
