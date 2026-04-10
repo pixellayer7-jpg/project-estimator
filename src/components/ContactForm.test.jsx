@@ -55,4 +55,26 @@ describe('ContactForm', () => {
       expect(screen.getByRole('status')).toHaveTextContent(/Thanks/)
     })
   })
+
+  it('clears error feedback when user edits after a failed submit', async () => {
+    vi.stubEnv('VITE_FORMSPREE_FORM_ID', 'testformid')
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      json: async () => ({}),
+    })
+    const user = userEvent.setup()
+    render(<ContactForm lang="en" />)
+
+    await user.type(screen.getByLabelText(/^Name$/i), 'Ada')
+    await user.type(screen.getByLabelText(/^Email$/i), 'ada@example.com')
+    await user.type(screen.getByLabelText(/^Message$/i), 'Hi')
+    await user.click(screen.getByRole('button', { name: /^Send$/i }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeInTheDocument()
+    })
+
+    await user.type(screen.getByLabelText(/^Message$/i), ' again')
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
 })

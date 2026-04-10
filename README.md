@@ -9,6 +9,8 @@ A small React app that gives clients an **estimated price range** for common pro
 
 **Live demo:** [https://pixellayer7-jpg.github.io/project-estimator/](https://pixellayer7-jpg.github.io/project-estimator/) — works after **Settings → Pages → GitHub Actions** is enabled and a deploy succeeds.
 
+Static **`<head>`** tweaks: `referrer` policy for outbound privacy, and **preconnect** to Google Fonts (used in `index.css`).
+
 - **EN / 中文** — Language toggle in the header (choice is saved in `localStorage`).
 - **Email pre-fill** — “Email this estimate” opens the mail client with subject + body listing project type, add-ons, extras, and USD range.
 - **Copy summary** — One-click copy of the same text for WeChat / other channels.

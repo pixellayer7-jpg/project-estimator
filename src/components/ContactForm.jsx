@@ -15,6 +15,13 @@ export default function ContactForm({ lang }) {
     }
   }, [status])
 
+  function bindField(setter) {
+    return (e) => {
+      setter(e.target.value)
+      setStatus((prev) => (prev === 'err' || prev === 'ok' ? 'idle' : prev))
+    }
+  }
+
   if (!formId) return null
 
   async function handleSubmit(e) {
@@ -106,7 +113,7 @@ export default function ContactForm({ lang }) {
               type="text"
               className="contact-input"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={bindField(setName)}
               required
               autoComplete="name"
             />
@@ -120,7 +127,7 @@ export default function ContactForm({ lang }) {
               type="email"
               className="contact-input"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={bindField(setEmail)}
               required
               autoComplete="email"
             />
@@ -134,7 +141,7 @@ export default function ContactForm({ lang }) {
               className="contact-textarea"
               rows={4}
               value={message}
-              onChange={(e) => setMessage(e.target.value)}
+              onChange={bindField(setMessage)}
               required
             />
           </div>
