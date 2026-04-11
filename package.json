@@ -1,7 +1,7 @@
 {
   "name": "project-estimator",
   "private": true,
-  "version": "1.12.0",
+  "version": "1.13.0",
   "description": "PixelLayer L.L.C — Project quote calculator for frontend & web development.",
   "keywords": [
     "react",
@@ -43,7 +43,7 @@
     "eslint-plugin-react-hooks": "^5.0.0",
     "eslint-plugin-react-refresh": "^0.4.14",
     "globals": "^15.12.0",
-    "prettier": "^3.4.2",
+    "prettier": "^3.8.2",
     "jsdom": "^25.0.1",
     "vite": "^5.0.0",
     "vitest": "^2.1.9"
