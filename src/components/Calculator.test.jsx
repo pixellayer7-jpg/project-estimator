@@ -110,4 +110,16 @@ describe('Calculator', () => {
     expect(pre).toBeVisible()
     expect(pre.textContent).toContain('Project type: Landing Page')
   })
+
+  it('shows persisted quote reference in preview', async () => {
+    const user = userEvent.setup()
+    render(<Calculator lang="en" />)
+    const ref = localStorage.getItem('pixellayer-estimator-quote-ref')
+    expect(ref).toBeTruthy()
+    expect(screen.getByText(ref)).toBeInTheDocument()
+    await user.click(screen.getByText(/Preview email body/i))
+    const pre = document.querySelector('.calc-preview-body')
+    expect(pre.textContent).toContain('Quote reference')
+    expect(pre.textContent).toContain(ref)
+  })
 })

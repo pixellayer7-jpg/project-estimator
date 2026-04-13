@@ -6,7 +6,8 @@ export function buildQuoteSummary(
   addOnIds,
   extraSections,
   min,
-  max
+  max,
+  quoteRef = null
 ) {
   const en = lang === 'en'
   const type = projectTypes.find((p) => p.id === projectTypeId)
@@ -23,23 +24,33 @@ export function buildQuoteSummary(
   const timelineLine = type ? (en ? type.timelineEn : type.timelineZh) : null
 
   if (en) {
-    const lines = [
+    const lines = []
+    if (quoteRef) {
+      lines.push(`Quote reference (include in email): ${quoteRef}`)
+      lines.push('')
+    }
+    lines.push(
       `Project type: ${typeLabel}`,
       `Add-ons: ${addOnLabels.length ? addOnLabels.join('; ') : 'None'}`,
       `Extra sections/pages: ${sections}`,
-      `Estimated range: $${min.toLocaleString()} – $${max.toLocaleString()} USD`,
-    ]
+      `Estimated range: $${min.toLocaleString()} – $${max.toLocaleString()} USD`
+    )
     if (timelineLine) lines.push(timelineLine)
     lines.push('', 'Timeline, budget, and reference links:')
     return lines.join('\n')
   }
 
-  const zhLines = [
+  const zhLines = []
+  if (quoteRef) {
+    zhLines.push(`报价编号（请在邮件中保留）：${quoteRef}`)
+    zhLines.push('')
+  }
+  zhLines.push(
     `项目类型：${typeLabel}`,
     `附加项：${addOnLabels.length ? addOnLabels.join('；') : '无'}`,
     `额外区块/页面：${sections}`,
-    `估算区间：$${min.toLocaleString()} – $${max.toLocaleString()} USD`,
-  ]
+    `估算区间：$${min.toLocaleString()} – $${max.toLocaleString()} USD`
+  )
   if (timelineLine) zhLines.push(timelineLine)
   zhLines.push('', '请补充：期望上线时间、预算范围、参考链接等：')
   return zhLines.join('\n')

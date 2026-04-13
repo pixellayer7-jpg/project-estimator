@@ -3,9 +3,14 @@ import {
   loadEstimatorForm,
   saveEstimatorForm,
   clearEstimatorForm,
+  loadQuoteRef,
+  saveQuoteRef,
+  clearQuoteRef,
+  ensureQuoteRef,
 } from './storage'
 
 const KEY = 'pixellayer-estimator-form'
+const REF_KEY = 'pixellayer-estimator-quote-ref'
 
 describe('storage', () => {
   beforeEach(() => {
@@ -75,5 +80,27 @@ describe('storage', () => {
   it('loadEstimatorForm returns null on invalid JSON', () => {
     localStorage.setItem(KEY, '{')
     expect(loadEstimatorForm()).toBeNull()
+  })
+
+  it('quote ref round-trip and clear', () => {
+    const id = '22222222-2222-4222-8222-222222222222'
+    saveQuoteRef(id)
+    expect(loadQuoteRef()).toBe(id)
+    clearQuoteRef()
+    expect(localStorage.getItem(REF_KEY)).toBeNull()
+  })
+
+  it('ensureQuoteRef creates and persists when missing', () => {
+    expect(loadQuoteRef()).toBeNull()
+    const a = ensureQuoteRef()
+    expect(a).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+    )
+    expect(loadQuoteRef()).toBe(a)
+  })
+
+  it('loadQuoteRef returns null for malformed stored value', () => {
+    localStorage.setItem(REF_KEY, 'not-a-uuid')
+    expect(loadQuoteRef()).toBeNull()
   })
 })

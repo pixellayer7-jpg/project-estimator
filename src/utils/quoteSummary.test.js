@@ -29,6 +29,15 @@ describe('buildQuoteSummary', () => {
     const s = buildQuoteSummary('en', 'unknown-id', [], '0', 0, 0)
     expect(s).toContain('Project type: unknown-id')
   })
+
+  it('prepends quote reference when provided', () => {
+    const id = '11111111-1111-4111-8111-111111111111'
+    const s = buildQuoteSummary('en', 'landing', [], '0', 800, 1200, id)
+    expect(s.startsWith(`Quote reference (include in email): ${id}`)).toBe(true)
+    expect(s).toContain('Project type: Landing Page')
+    const zh = buildQuoteSummary('zh', 'landing', [], '0', 800, 1200, id)
+    expect(zh).toContain(`报价编号（请在邮件中保留）：${id}`)
+  })
 })
 
 describe('buildMailtoHref', () => {

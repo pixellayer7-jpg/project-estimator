@@ -127,6 +127,24 @@ input:focus-visible {
   opacity: 0.9;
 }
 
+.calc-ref {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: -0.5rem 0 1rem;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+.calc-ref-label {
+  font-weight: 600;
+}
+
+.calc-ref-code {
+  font-family: ui-monospace, 'Cascadia Code', monospace;
+  font-size: 0.78rem;
+  color: var(--accent);
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
@@ -583,6 +601,11 @@ input:focus-visible {
     max-height: none;
     border-color: #ccc;
     color: #334155;
+  }
+
+  .calc-ref,
+  .calc-ref-code {
+    color: #475569 !important;
   }
 
   .no-print,

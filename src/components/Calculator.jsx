@@ -3,8 +3,11 @@ import { projectTypes, addOns, calculateQuote } from '../data/pricing'
 import { buildMailtoHref, buildQuoteSummary } from '../utils/quoteSummary'
 import {
   clearEstimatorForm,
+  clearQuoteRef,
+  ensureQuoteRef,
   loadEstimatorForm,
   saveEstimatorForm,
+  saveQuoteRef,
 } from '../utils/storage'
 
 const isEn = (lang) => lang === 'en'
@@ -28,6 +31,7 @@ export default function Calculator({ lang = 'en' }) {
     ...defaultForm,
     ...(loadEstimatorForm() ?? {}),
   }))
+  const [quoteRef, setQuoteRef] = useState(() => ensureQuoteRef())
   const [copyState, setCopyState] = useState('idle')
   const [copyAnnounce, setCopyAnnounce] = useState('')
   const projectBtnRefs = useRef([])
@@ -47,15 +51,17 @@ export default function Calculator({ lang = 'en' }) {
     addOnIds,
     extraSections,
     min,
-    max
+    max,
+    quoteRef
   )
 
   const currentType = projectTypes.find((p) => p.id === projectType)
 
+  const subjectShort = quoteRef.replace(/-/g, '').slice(0, 8)
   const subject =
     lang === 'en'
-      ? 'Project quote request — PixelLayer L.L.C'
-      : '项目报价咨询 — PixelLayer L.L.C'
+      ? `Project quote request [${subjectShort}] — PixelLayer L.L.C`
+      : `项目报价咨询 [${subjectShort}] — PixelLayer L.L.C`
 
   const mailtoHref = buildMailtoHref(EMAIL, subject, summary)
 
@@ -72,9 +78,17 @@ export default function Calculator({ lang = 'en' }) {
 
   function handleReset() {
     clearEstimatorForm()
+    clearQuoteRef()
+    const nextRef = crypto.randomUUID()
+    saveQuoteRef(nextRef)
+    setQuoteRef(nextRef)
     const next = { ...defaultForm }
     setForm(next)
     saveEstimatorForm(next)
+  }
+
+  function handlePrintEstimate() {
+    window.print()
   }
 
   function handleProjectKeyDown(e, index) {
@@ -150,6 +164,10 @@ export default function Calculator({ lang = 'en' }) {
         copyAria: 'Copy estimate summary to clipboard',
         downloadTxt: 'Download .txt',
         downloadAria: 'Download estimate summary as a text file',
+        printPdf: 'Print / Save as PDF',
+        printAria:
+          'Open print dialog to save or print the estimate (uses your browser)',
+        refLabel: 'Quote reference',
         persistedHint: 'Your choices are saved on this device until you reset.',
       }
     : {
@@ -171,6 +189,9 @@ export default function Calculator({ lang = 'en' }) {
         copyAria: '将估算摘要复制到剪贴板',
         downloadTxt: '下载 .txt',
         downloadAria: '将估算摘要下载为文本文件',
+        printPdf: '打印 / 另存为 PDF',
+        printAria: '打开打印对话框，可将估算另存为 PDF 或打印（由浏览器完成）',
+        refLabel: '报价编号',
         persistedHint: '选项会保存在本机浏览器中，直到你点击重置。',
       }
 
@@ -192,6 +213,10 @@ export default function Calculator({ lang = 'en' }) {
         </span>
 
         <div className="calc-card print-area">
+          <p className="calc-ref">
+            <span className="calc-ref-label">{t.refLabel}:</span>{' '}
+            <code className="calc-ref-code">{quoteRef}</code>
+          </p>
           <fieldset className="calc-fieldset">
             <legend className="calc-label">{t.projectLabel}</legend>
             <div
@@ -301,6 +326,14 @@ export default function Calculator({ lang = 'en' }) {
               aria-label={t.downloadAria}
             >
               {t.downloadTxt}
+            </button>
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={handlePrintEstimate}
+              aria-label={t.printAria}
+            >
+              {t.printPdf}
             </button>
           </div>
 

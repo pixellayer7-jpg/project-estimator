@@ -29,6 +29,20 @@ Static **`<head>`** tweaks: `referrer` policy for outbound privacy, and **precon
 - **Config-driven** — Edit `src/data/pricing.js` to change base prices and add-ons (no code logic changes needed).
 - **SEO (deploy)** — Set `VITE_SITE_URL` at build time to inject `rel=canonical`, `og:url`, `og:image` (site `favicon.svg`), and matching Twitter tags (see [Deploy](#deploy)).
 - **Contact form (optional)** — Set `VITE_FORMSPREE_FORM_ID` to show a Formspree-powered message form below the calculator (no mail client required).
+- **Quote reference** — Each device gets a persisted **UUID** for correspondence (email subject prefix + summary body). **Reset** issues a new id. No server; fine for lightweight commercial use until you add a backend.
+- **Print / PDF** — “Print / Save as PDF” opens the system print dialog so clients can save the styled estimate (same print rules as before).
+
+## Commercial readiness / 商单准备（无需新账号即可完成的部分）
+
+已在应用内提供：**报价编号**、**邮件主题短码**、**打印/PDF**、**robots.txt**、SEO 元数据、表单与测试。你仍需自行完成（涉及账号或法律）的事项示例：
+
+| You still handle / 需你自行处理   | Why                          |
+| --------------------------------- | ---------------------------- |
+| **Stripe / Lemon Squeezy** 等收款 | 需商户身份与平台注册         |
+| **域名与 DNS**                    | 需购买与解析                 |
+| **Terms of Service / 隐私政策**   | 需律师或模板按司法辖区定稿   |
+| **企业邮箱与 SPF/DKIM**           | 提高邮件送达率               |
+| **服务端存报价、登录、分享链接**  | 需数据库与 API（可后续迭代） |
 
 ## For clients / 给客户
 
