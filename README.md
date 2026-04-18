@@ -49,7 +49,7 @@ Static **`<head>`** tweaks: `referrer` policy for outbound privacy, and **precon
 - **English** — Estimates are indicative; email **pixellayer7@gmail.com** for a written proposal.
 - **中文** — 页面数字仅为估算；正式报价请发邮件至 **pixellayer7@gmail.com**。
 
-Related: [PixelLayer landing page repo](https://github.com/pixellayer7-jpg/1) · [estimator-api](https://github.com/pixellayer7-jpg/estimator-api) (optional backend to save quotes by id)
+Related: [PixelLayer landing page repo](https://github.com/pixellayer7-jpg/1) · [estimator-api](https://github.com/pixellayer7-jpg/estimator-api) v0.3+ — optional backend: `POST` / `GET` quote by id, and **`GET /api/v1/quotes?limit=`** to list recent rows (no `summary` in list items; protect in production).
 
 ## Tech
 
