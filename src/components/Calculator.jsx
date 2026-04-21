@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { projectTypes, addOns, calculateQuote } from '../data/pricing'
 import { buildMailtoHref, buildQuoteSummary } from '../utils/quoteSummary'
 import {
@@ -13,6 +13,60 @@ import {
 const isEn = (lang) => lang === 'en'
 
 const EMAIL = 'pixellayer7@gmail.com'
+
+const STRINGS_EN = {
+  title: 'Get an estimated quote',
+  subtitle:
+    'Select your project type and options. Final price depends on scope and timeline.',
+  projectLabel: 'Project type',
+  addOnsLabel: 'Add-ons',
+  extraLabel: 'Extra sections or pages',
+  extraPlaceholder: '0',
+  resultLabel: 'Estimated range',
+  disclaimer:
+    'Indicative only — not a binding offer. Final scope and price are agreed in writing.',
+  cta: 'Email this estimate',
+  ctaSub:
+    'Your selections are pre-filled in the email body. Add details and send.',
+  reset: 'Reset',
+  copySummary: 'Copy summary',
+  copied: 'Copied!',
+  copyFailed: 'Copy failed',
+  previewTitle: 'Preview email body',
+  copyAria: 'Copy estimate summary to clipboard',
+  downloadTxt: 'Download .txt',
+  downloadAria: 'Download estimate summary as a text file',
+  printPdf: 'Print / Save as PDF',
+  printAria:
+    'Open print dialog to save or print the estimate (uses your browser)',
+  refLabel: 'Quote reference',
+  persistedHint: 'Your choices are saved on this device until you reset.',
+}
+
+const STRINGS_ZH = {
+  title: '获取项目报价估算',
+  subtitle: '选择项目类型与选项，最终报价将根据具体需求与周期确定。',
+  projectLabel: '项目类型',
+  addOnsLabel: '附加项',
+  extraLabel: '额外区块或页面数量',
+  extraPlaceholder: '0',
+  resultLabel: '估算区间',
+  disclaimer: '仅供参考，不构成正式报价；最终范围与价格以书面约定为准。',
+  cta: '用邮件发送此估算',
+  ctaSub: '邮件正文已预填当前选项，可补充说明后发送。',
+  reset: '重置',
+  copySummary: '复制摘要',
+  copied: '已复制',
+  copyFailed: '复制失败',
+  previewTitle: '预览邮件正文',
+  copyAria: '将估算摘要复制到剪贴板',
+  downloadTxt: '下载 .txt',
+  downloadAria: '将估算摘要下载为文本文件',
+  printPdf: '打印 / 另存为 PDF',
+  printAria: '打开打印对话框，可将估算另存为 PDF 或打印（由浏览器完成）',
+  refLabel: '报价编号',
+  persistedHint: '选项会保存在本机浏览器中，直到你点击重置。',
+}
 
 const defaultForm = {
   projectType: 'landing',
@@ -43,27 +97,29 @@ export default function Calculator({ lang = 'en' }) {
     return () => window.clearTimeout(id)
   }, [form])
 
-  const { min, max } = calculateQuote(projectType, addOnIds, extraSections)
-
-  const summary = buildQuoteSummary(
-    lang,
-    projectType,
-    addOnIds,
-    extraSections,
-    min,
-    max,
-    quoteRef
-  )
-
-  const currentType = projectTypes.find((p) => p.id === projectType)
-
-  const subjectShort = quoteRef.replace(/-/g, '').slice(0, 8)
-  const subject =
-    lang === 'en'
-      ? `Project quote request [${subjectShort}] — PixelLayer L.L.C`
-      : `项目报价咨询 [${subjectShort}] — PixelLayer L.L.C`
-
-  const mailtoHref = buildMailtoHref(EMAIL, subject, summary)
+  const { min, max, summary, mailtoHref, timelineText } = useMemo(() => {
+    const { min, max } = calculateQuote(projectType, addOnIds, extraSections)
+    const summary = buildQuoteSummary(
+      lang,
+      projectType,
+      addOnIds,
+      extraSections,
+      min,
+      max,
+      quoteRef
+    )
+    const subjectShort = quoteRef.replace(/-/g, '').slice(0, 8)
+    const subject =
+      lang === 'en'
+        ? `Project quote request [${subjectShort}] — PixelLayer L.L.C`
+        : `项目报价咨询 [${subjectShort}] — PixelLayer L.L.C`
+    const mailtoHref = buildMailtoHref(EMAIL, subject, summary)
+    const currentType = projectTypes.find((p) => p.id === projectType)
+    const timelineText =
+      currentType &&
+      (isEn(lang) ? currentType.timelineEn : currentType.timelineZh)
+    return { min, max, summary, mailtoHref, timelineText }
+  }, [lang, projectType, addOnIds, extraSections, quoteRef])
 
   const setProjectType = (id) => setForm((f) => ({ ...f, projectType: id }))
 
@@ -141,63 +197,7 @@ export default function Calculator({ lang = 'en' }) {
     }
   }
 
-  const t = isEn(lang)
-    ? {
-        title: 'Get an estimated quote',
-        subtitle:
-          'Select your project type and options. Final price depends on scope and timeline.',
-        projectLabel: 'Project type',
-        addOnsLabel: 'Add-ons',
-        extraLabel: 'Extra sections or pages',
-        extraPlaceholder: '0',
-        resultLabel: 'Estimated range',
-        disclaimer:
-          'Indicative only — not a binding offer. Final scope and price are agreed in writing.',
-        cta: 'Email this estimate',
-        ctaSub:
-          'Your selections are pre-filled in the email body. Add details and send.',
-        reset: 'Reset',
-        copySummary: 'Copy summary',
-        copied: 'Copied!',
-        copyFailed: 'Copy failed',
-        previewTitle: 'Preview email body',
-        copyAria: 'Copy estimate summary to clipboard',
-        downloadTxt: 'Download .txt',
-        downloadAria: 'Download estimate summary as a text file',
-        printPdf: 'Print / Save as PDF',
-        printAria:
-          'Open print dialog to save or print the estimate (uses your browser)',
-        refLabel: 'Quote reference',
-        persistedHint: 'Your choices are saved on this device until you reset.',
-      }
-    : {
-        title: '获取项目报价估算',
-        subtitle: '选择项目类型与选项，最终报价将根据具体需求与周期确定。',
-        projectLabel: '项目类型',
-        addOnsLabel: '附加项',
-        extraLabel: '额外区块或页面数量',
-        extraPlaceholder: '0',
-        resultLabel: '估算区间',
-        disclaimer: '仅供参考，不构成正式报价；最终范围与价格以书面约定为准。',
-        cta: '用邮件发送此估算',
-        ctaSub: '邮件正文已预填当前选项，可补充说明后发送。',
-        reset: '重置',
-        copySummary: '复制摘要',
-        copied: '已复制',
-        copyFailed: '复制失败',
-        previewTitle: '预览邮件正文',
-        copyAria: '将估算摘要复制到剪贴板',
-        downloadTxt: '下载 .txt',
-        downloadAria: '将估算摘要下载为文本文件',
-        printPdf: '打印 / 另存为 PDF',
-        printAria: '打开打印对话框，可将估算另存为 PDF 或打印（由浏览器完成）',
-        refLabel: '报价编号',
-        persistedHint: '选项会保存在本机浏览器中，直到你点击重置。',
-      }
-
-  const timelineText =
-    currentType &&
-    (isEn(lang) ? currentType.timelineEn : currentType.timelineZh)
+  const t = isEn(lang) ? STRINGS_EN : STRINGS_ZH
 
   return (
     <section className="calc" aria-labelledby="calc-title">

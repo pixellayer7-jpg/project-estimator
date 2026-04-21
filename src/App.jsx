@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import Calculator from './components/Calculator'
-import ContactForm from './components/ContactForm'
+
+const ContactForm = lazy(() => import('./components/ContactForm'))
 
 const LANG_KEY = 'pixellayer-estimator-lang'
 
@@ -77,7 +78,9 @@ export default function App() {
       </header>
       <main id="main-content">
         <Calculator lang={lang} />
-        <ContactForm lang={lang} />
+        <Suspense fallback={null}>
+          <ContactForm lang={lang} />
+        </Suspense>
       </main>
       <footer className="footer" role="contentinfo">
         <div className="container">
