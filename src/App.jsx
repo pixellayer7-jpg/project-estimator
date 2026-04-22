@@ -78,7 +78,19 @@ export default function App() {
       </header>
       <main id="main-content">
         <Calculator lang={lang} />
-        <Suspense fallback={null}>
+        <Suspense
+          fallback={
+            <p
+              className="contact-suspense-fallback"
+              role="status"
+              aria-live="polite"
+            >
+              {lang === 'en'
+                ? 'Loading contact form…'
+                : '正在加载留言表单…'}
+            </p>
+          }
+        >
           <ContactForm lang={lang} />
         </Suspense>
       </main>

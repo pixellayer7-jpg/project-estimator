@@ -1,7 +1,36 @@
 import { useEffect, useRef, useState } from 'react'
 
+const STRINGS_EN = {
+  title: 'Send a message',
+  subtitle:
+    'No mail app needed — we’ll get your note by email. Or use the address in the footer.',
+  name: 'Name',
+  email: 'Email',
+  message: 'Message',
+  submit: 'Send',
+  sending: 'Sending…',
+  success: 'Thanks — your message was sent.',
+  error: 'Something went wrong. Try email or try again later.',
+  privacy:
+    'Submitted via Formspree; see their privacy policy for how data is handled.',
+}
+
+const STRINGS_ZH = {
+  title: '在线留言',
+  subtitle: '无需邮件客户端即可发送；也可使用页脚邮箱直接联系。',
+  name: '姓名',
+  email: '邮箱',
+  message: '留言内容',
+  submit: '发送',
+  sending: '发送中…',
+  success: '已收到，感谢留言。',
+  error: '发送失败，请改用邮箱联系或稍后重试。',
+  privacy: '通过 Formspree 提交，数据处理见其隐私说明。',
+}
+
 export default function ContactForm({ lang }) {
   const formId = import.meta.env.VITE_FORMSPREE_FORM_ID
+  const t = lang === 'en' ? STRINGS_EN : STRINGS_ZH
   const en = lang === 'en'
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -57,34 +86,6 @@ export default function ContactForm({ lang }) {
     }
   }
 
-  const t = en
-    ? {
-        title: 'Send a message',
-        subtitle:
-          'No mail app needed — we’ll get your note by email. Or use the address in the footer.',
-        name: 'Name',
-        email: 'Email',
-        message: 'Message',
-        submit: 'Send',
-        sending: 'Sending…',
-        success: 'Thanks — your message was sent.',
-        error: 'Something went wrong. Try email or try again later.',
-        privacy:
-          'Submitted via Formspree; see their privacy policy for how data is handled.',
-      }
-    : {
-        title: '在线留言',
-        subtitle: '无需邮件客户端即可发送；也可使用页脚邮箱直接联系。',
-        name: '姓名',
-        email: '邮箱',
-        message: '留言内容',
-        submit: '发送',
-        sending: '发送中…',
-        success: '已收到，感谢留言。',
-        error: '发送失败，请改用邮箱联系或稍后重试。',
-        privacy: '通过 Formspree 提交，数据处理见其隐私说明。',
-      }
-
   return (
     <section
       className="contact-section"
@@ -115,6 +116,7 @@ export default function ContactForm({ lang }) {
               value={name}
               onChange={bindField(setName)}
               required
+              maxLength={120}
               autoComplete="name"
             />
 
@@ -129,6 +131,7 @@ export default function ContactForm({ lang }) {
               value={email}
               onChange={bindField(setEmail)}
               required
+              maxLength={320}
               autoComplete="email"
             />
 
@@ -143,6 +146,7 @@ export default function ContactForm({ lang }) {
               value={message}
               onChange={bindField(setMessage)}
               required
+              maxLength={8000}
             />
           </div>
 

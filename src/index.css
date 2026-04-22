@@ -7,6 +7,7 @@
 }
 
 :root {
+  color-scheme: dark;
   --bg: #0f172a;
   --bg-card: #1e293b;
   --text: #f1f5f9;
@@ -476,6 +477,14 @@ input:focus-visible {
 
 .calc-cta-sub {
   margin-top: 0.75rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.contact-suspense-fallback {
+  padding: 2.5rem 0 1rem;
+  margin-top: 2rem;
+  border-top: 1px solid var(--border);
   font-size: 0.9rem;
   color: var(--text-muted);
 }
