@@ -28,7 +28,8 @@ Static **`<head>`** tweaks: `referrer` policy for outbound privacy, and **precon
 - **Landmarks** — `banner` / `contentinfo` roles for assistive tech; Twitter Card meta for sharing.
 - **Config-driven** — Edit `src/data/pricing.js` to change base prices and add-ons (no code logic changes needed).
 - **SEO (deploy)** — Set `VITE_SITE_URL` at build time to inject `rel=canonical`, `og:url`, `og:image` (site `favicon.svg`), and matching Twitter tags (see [Deploy](#deploy)).
-- **Contact form (optional)** — Set `VITE_FORMSPREE_FORM_ID` to show a Formspree-powered message form below the calculator (no mail client required).
+- **Contact form (optional)** — Set `VITE_FORMSPREE_FORM_ID` to show a Formspree-powered message form below the calculator (no mail client required). Fields have sensible **max lengths**; the lazy-loaded chunk shows a short **loading** status for assistive tech.
+- **Dark UI hints** — `color-scheme: dark` in HTML/CSS so browsers use dark scrollbars and native controls where supported.
 - **Quote reference** — Each device gets a persisted **UUID** for correspondence (email subject prefix + summary body). **Reset** issues a new id. No server; fine for lightweight commercial use until you add a backend.
 - **Print / PDF** — “Print / Save as PDF” opens the system print dialog so clients can save the styled estimate (same print rules as before).
 
@@ -49,7 +50,7 @@ Static **`<head>`** tweaks: `referrer` policy for outbound privacy, and **precon
 - **English** — Estimates are indicative; email **pixellayer7@gmail.com** for a written proposal.
 - **中文** — 页面数字仅为估算；正式报价请发邮件至 **pixellayer7@gmail.com**。
 
-Related: [PixelLayer landing page repo](https://github.com/pixellayer7-jpg/1) · [estimator-api](https://github.com/pixellayer7-jpg/estimator-api) v0.3+ — optional backend: `POST` / `GET` quote by id, and **`GET /api/v1/quotes?limit=`** to list recent rows (no `summary` in list items; protect in production).
+Related: [PixelLayer landing page repo](https://github.com/pixellayer7-jpg/1) · [estimator-api](https://github.com/pixellayer7-jpg/estimator-api) **v0.3.2+** — optional backend: `POST` / `GET` quote by **UUID** id (malformed id → 400), **`GET /api/v1/quotes?limit=`** list (no `summary` in list items; protect in production).
 
 ## Tech
 

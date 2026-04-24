@@ -85,9 +85,7 @@ export default function App() {
               role="status"
               aria-live="polite"
             >
-              {lang === 'en'
-                ? 'Loading contact form…'
-                : '正在加载留言表单…'}
+              {lang === 'en' ? 'Loading contact form…' : '正在加载留言表单…'}
             </p>
           }
         >
