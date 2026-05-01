@@ -50,7 +50,7 @@ Static **`<head>`** tweaks: `referrer` policy for outbound privacy, and **precon
 - **English** — Estimates are indicative; email **pixellayer7@gmail.com** for a written proposal.
 - **中文** — 页面数字仅为估算；正式报价请发邮件至 **pixellayer7@gmail.com**。
 
-Related: [PixelLayer landing page repo](https://github.com/pixellayer7-jpg/1) · [estimator-api](https://github.com/pixellayer7-jpg/estimator-api) **v0.3.6+** — optional backend: `POST` / `GET` quote by **UUID** id (malformed id → 400), **`GET /api/v1/quotes?limit=`** list (no `summary` in list items; protect in production); responses set **`X-Content-Type-Options: nosniff`**.
+Related: [PixelLayer landing page repo](https://github.com/pixellayer7-jpg/1) · [estimator-api](https://github.com/pixellayer7-jpg/estimator-api) **v0.3.7+** — optional backend: `POST` / `GET` quote by **UUID** id (malformed id → 400), **`GET /api/v1/quotes?limit=`** list (no `summary` in list items; protect in production); responses set **`X-Content-Type-Options: nosniff`**; **`POST`** JSON body max **256 KiB**.
 
 ## Tech
 
@@ -107,6 +107,10 @@ Open `src/data/pricing.js`:
 ## Contact
 
 **PixelLayer L.L.C** — [pixellayer7@gmail.com](mailto:pixellayer7@gmail.com)
+
+## Security
+
+Report vulnerabilities privately: [SECURITY.md](./SECURITY.md).
 
 ## License
 

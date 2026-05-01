@@ -1,7 +1,7 @@
 {
   "name": "project-estimator",
   "private": true,
-  "version": "1.14.9",
+  "version": "1.15.0",
   "description": "PixelLayer L.L.C — Project quote calculator for frontend & web development.",
   "keywords": [
     "react",
@@ -13,9 +13,13 @@
   ],
   "type": "module",
   "author": "PixelLayer L.L.C",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/pixellayer7-jpg/project-estimator.git"
+  },
+  "engines": {
+    "node": ">=20"
   },
   "scripts": {
     "dev": "vite",
