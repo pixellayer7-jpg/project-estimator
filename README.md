@@ -50,7 +50,7 @@ Static **`<head>`** tweaks: `referrer` policy for outbound privacy, and **precon
 - **English** — Estimates are indicative; email **pixellayer7@gmail.com** for a written proposal.
 - **中文** — 页面数字仅为估算；正式报价请发邮件至 **pixellayer7@gmail.com**。
 
-Related: [PixelLayer landing page repo](https://github.com/pixellayer7-jpg/1) · [estimator-api](https://github.com/pixellayer7-jpg/estimator-api) **v0.3.10+** — optional backend: `POST` / `GET` quote by **UUID** id (malformed id → 400), **`GET /api/v1/quotes?limit=`** list (no `summary` in list items; protect in production); responses set **`X-Content-Type-Options: nosniff`**; **`POST`** JSON body max **256 KiB**.
+Related: [PixelLayer landing page repo](https://github.com/pixellayer7-jpg/1) · [estimator-api](https://github.com/pixellayer7-jpg/estimator-api) **v0.3.11+** — optional backend: `POST` / `GET` quote by **UUID** id (malformed id → 400), **`GET /api/v1/quotes?limit=`** list (no `summary` in list items; protect in production); responses set **`X-Content-Type-Options: nosniff`**; **`POST`** JSON body max **256 KiB**.
 
 ## Tech
 
@@ -61,17 +61,19 @@ Related: [PixelLayer landing page repo](https://github.com/pixellayer7-jpg/1) ·
 
 ```bash
 npm install
+nvm use      # if you use nvm; reads .nvmrc (Node 20)
 npm run dev    # http://localhost:5173
 npm run build
 npm run preview
 npm run lint   # ESLint
 npm run format # Prettier write
 npm run format:check
-npm test       # Vitest: pricing, quoteSummary, storage, Calculator, ContactForm
+npm run check  # format:check + lint + test (same checks as CI before build)
+npm test       # vitest run
 npm run test:watch
 ```
 
-Tests live next to sources (`*.test.js` / `*.test.jsx`). CI runs `npm run lint`, then `npm test`, then `npm run build`.
+Tests live next to sources (`*.test.js` / `*.test.jsx`). CI runs **`npm run check`** then **`npm run build`**. Duplicate pushes/PRs cancel older runs (**concurrency**).
 
 - **Error boundary** — Uncaught render errors show a bilingual fallback with a reload button instead of a blank screen.
 - **ESLint** — `npm run lint` (React, hooks, refresh plugin; config in `eslint.config.js`).
