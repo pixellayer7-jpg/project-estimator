@@ -32,6 +32,7 @@ Static **`<head>`** tweaks: `referrer` policy for outbound privacy, and **precon
 - **Dark UI hints** — `color-scheme: dark` in HTML/CSS so browsers use dark scrollbars and native controls where supported.
 - **Quote reference** — Each device gets a persisted **UUID** for correspondence (email subject prefix + summary body). **Reset** issues a new id. No server; fine for lightweight commercial use until you add a backend.
 - **Print / PDF** — “Print / Save as PDF” opens the system print dialog so clients can save the styled estimate (same print rules as before).
+- **Save online copy (optional)** — If **`VITE_QUOTE_API_URL`** is set at build time, users can **POST** the current estimate to **estimator-api** and get a **shareable link** to the stored JSON (configure **CORS** on the API for your site origin).
 
 ## Commercial readiness / 商单准备（无需新账号即可完成的部分）
 
@@ -50,7 +51,7 @@ Static **`<head>`** tweaks: `referrer` policy for outbound privacy, and **precon
 - **English** — Estimates are indicative; email **pixellayer7@gmail.com** for a written proposal.
 - **中文** — 页面数字仅为估算；正式报价请发邮件至 **pixellayer7@gmail.com**。
 
-Related: [PixelLayer landing page repo](https://github.com/pixellayer7-jpg/1) · [estimator-api](https://github.com/pixellayer7-jpg/estimator-api) **v0.3.13+** — optional backend: `POST` / `GET` quote by **UUID** id (malformed id → 400), **`GET /api/v1/quotes?limit=`** list (no `summary` in list items; protect in production); responses set **`X-Content-Type-Options: nosniff`**; **`POST`** JSON body max **256 KiB**.
+Related: [PixelLayer landing page repo](https://github.com/pixellayer7-jpg/1) · [estimator-api](https://github.com/pixellayer7-jpg/estimator-api) **v0.3.13+** — optional backend: `POST` / `GET` quote by **UUID** id (malformed id → 400), **`GET /api/v1/quotes?limit=`** list (no `summary` in list items; protect in production); responses set **`X-Content-Type-Options: nosniff`**; **`POST`** JSON body max **256 KiB**. This calculator can **POST** the same snapshot from the UI when **`VITE_QUOTE_API_URL`** is set at build time.
 
 ## Tech
 
@@ -86,17 +87,18 @@ Copy `.env.example` to `.env.production.local` (or configure vars in the host UI
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `VITE_SITE_URL`          | Public origin **without** trailing slash, e.g. `https://pixellayer7-jpg.github.io/project-estimator` or `https://your-app.vercel.app`. Injected at build as canonical, Open Graph / Twitter URL, and **image** (`…/favicon.svg`). Some networks prefer PNG for previews; replace `public/favicon.svg` or extend `vite.config.js` if needed. |
 | `VITE_FORMSPREE_FORM_ID` | Formspree form id (from `https://formspree.io/f/<id>`). If empty, the contact section is hidden.                                                                                                                                                                                                                                            |
+| `VITE_QUOTE_API_URL`     | Optional **estimator-api** origin (no trailing slash). If set at build time, the calculator shows **Save online copy** and can **POST** a snapshot; the API must allow **CORS** from your deployed calculator origin. For GitHub Pages, add repo secret **`VITE_QUOTE_API_URL`** (see workflow).                                            |
 
 ### GitHub Pages
 
 1. Repo **Settings → Pages → Build and deployment**: source **GitHub Actions**.
-2. Optional: **Settings → Secrets and variables → Actions** → add `FORMSPREE_FORM_ID` so the deployed site shows the form.
+2. Optional: **Settings → Secrets and variables → Actions** → add **`FORMSPREE_FORM_ID`** (form on site) and/or **`VITE_QUOTE_API_URL`** (server save + share link).
 3. Push to `main`: workflow [`.github/workflows/pages.yml`](./.github/workflows/pages.yml) runs tests, builds with `VITE_SITE_URL` set to this repo’s Pages URL, and publishes `dist`.  
    If you fork or rename the repo, update `VITE_SITE_URL` in that workflow file.
 
 ### Vercel / Netlify
 
-Connect the repo, set **build** `npm run build`, output **`dist`**. Add environment variables `VITE_SITE_URL` and `VITE_FORMSPREE_FORM_ID` for **Production** (and Preview if you want the form there).
+Connect the repo, set **build** `npm run build`, output **`dist`**. Add environment variables `VITE_SITE_URL`, `VITE_FORMSPREE_FORM_ID`, and optionally **`VITE_QUOTE_API_URL`** for **Production** (and Preview if you want them there).
 
 ## Customize prices
 

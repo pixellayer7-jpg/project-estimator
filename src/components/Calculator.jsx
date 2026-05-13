@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { projectTypes, addOns, calculateQuote } from '../data/pricing'
 import { buildMailtoHref, buildQuoteSummary } from '../utils/quoteSummary'
+import { normalizeQuoteApiBase, postQuoteSnapshot } from '../utils/quoteApi'
 import {
   clearEstimatorForm,
   clearQuoteRef,
@@ -41,6 +42,16 @@ const STRINGS_EN = {
     'Open print dialog to save or print the estimate (uses your browser)',
   refLabel: 'Quote reference',
   persistedHint: 'Your choices are saved on this device until you reset.',
+  saveToServer: 'Save online copy',
+  saveSaving: 'Saving…',
+  saveSaved: 'Saved. Share this link:',
+  saveOpen: 'Open',
+  saveCopyLink: 'Copy link',
+  saveCopyLinkAria: 'Copy share link to clipboard',
+  saveLinkCopied: 'Link copied!',
+  saveFail: 'Save failed',
+  saveHint:
+    'Optional: stores a snapshot on your estimator-api. Set VITE_QUOTE_API_URL at build time and allow CORS for this site.',
 }
 
 const STRINGS_ZH = {
@@ -66,6 +77,16 @@ const STRINGS_ZH = {
   printAria: '打开打印对话框，可将估算另存为 PDF 或打印（由浏览器完成）',
   refLabel: '报价编号',
   persistedHint: '选项会保存在本机浏览器中，直到你点击重置。',
+  saveToServer: '保存线上副本',
+  saveSaving: '保存中…',
+  saveSaved: '已保存，可分享此链接：',
+  saveOpen: '打开',
+  saveCopyLink: '复制链接',
+  saveCopyLinkAria: '将分享链接复制到剪贴板',
+  saveLinkCopied: '链接已复制！',
+  saveFail: '保存失败',
+  saveHint:
+    '可选：把当前估算快照存到你的 estimator-api。构建时设置 VITE_QUOTE_API_URL，并在 API 上为本站配置 CORS。',
 }
 
 const defaultForm = {
@@ -81,6 +102,10 @@ function clampExtraSectionsString(raw) {
 }
 
 export default function Calculator({ lang = 'en' }) {
+  const quoteApiBase = useMemo(
+    () => normalizeQuoteApiBase(import.meta.env.VITE_QUOTE_API_URL),
+    []
+  )
   const [form, setForm] = useState(() => ({
     ...defaultForm,
     ...(loadEstimatorForm() ?? {}),
@@ -88,6 +113,11 @@ export default function Calculator({ lang = 'en' }) {
   const [quoteRef, setQuoteRef] = useState(() => ensureQuoteRef())
   const [copyState, setCopyState] = useState('idle')
   const [copyAnnounce, setCopyAnnounce] = useState('')
+  const [saveState, setSaveState] = useState('idle')
+  const [saveUrl, setSaveUrl] = useState(null)
+  const [saveErr, setSaveErr] = useState('')
+  const [saveLinkCopyState, setSaveLinkCopyState] = useState('idle')
+  const saveAbortRef = useRef(null)
   const projectBtnRefs = useRef([])
 
   const { projectType, addOnIds, extraSections } = form
@@ -121,6 +151,14 @@ export default function Calculator({ lang = 'en' }) {
     return { min, max, summary, mailtoHref, timelineText }
   }, [lang, projectType, addOnIds, extraSections, quoteRef])
 
+  useEffect(() => {
+    saveAbortRef.current?.abort()
+    setSaveState('idle')
+    setSaveUrl(null)
+    setSaveErr('')
+    setSaveLinkCopyState('idle')
+  }, [lang, projectType, addOnIds, extraSections, quoteRef, min, max])
+
   const setProjectType = (id) => setForm((f) => ({ ...f, projectType: id }))
 
   const toggleAddOn = (id) => {
@@ -133,6 +171,11 @@ export default function Calculator({ lang = 'en' }) {
   }
 
   function handleReset() {
+    saveAbortRef.current?.abort()
+    setSaveState('idle')
+    setSaveUrl(null)
+    setSaveErr('')
+    setSaveLinkCopyState('idle')
     clearEstimatorForm()
     clearQuoteRef()
     const nextRef = crypto.randomUUID()
@@ -194,6 +237,51 @@ export default function Calculator({ lang = 'en' }) {
         setCopyState('idle')
         setCopyAnnounce('')
       }, 2000)
+    }
+  }
+
+  async function handleSaveToServer() {
+    if (!quoteApiBase) return
+    saveAbortRef.current?.abort()
+    const ac = new AbortController()
+    saveAbortRef.current = ac
+    setSaveState('loading')
+    setSaveErr('')
+    setSaveUrl(null)
+    setSaveLinkCopyState('idle')
+    try {
+      const body = {
+        projectType,
+        addOnIds: [...addOnIds],
+        extraSections,
+        min,
+        max,
+        lang,
+        quoteRef,
+        summary,
+      }
+      const data = await postQuoteSnapshot(quoteApiBase, body, {
+        signal: ac.signal,
+      })
+      if (saveAbortRef.current !== ac) return
+      const viewUrl = `${quoteApiBase}/api/v1/quotes/${data.id}`
+      setSaveState('ok')
+      setSaveUrl(viewUrl)
+    } catch (e) {
+      if (ac.signal.aborted) return
+      setSaveState('err')
+      setSaveErr(e instanceof Error ? e.message : String(e))
+    }
+  }
+
+  async function handleCopySaveLink() {
+    if (!saveUrl) return
+    try {
+      await navigator.clipboard.writeText(saveUrl)
+      setSaveLinkCopyState('ok')
+      setTimeout(() => setSaveLinkCopyState('idle'), 2000)
+    } catch {
+      setSaveLinkCopyState('idle')
     }
   }
 
@@ -362,6 +450,53 @@ export default function Calculator({ lang = 'en' }) {
             {t.cta}
           </a>
           <p className="calc-cta-sub">{t.ctaSub}</p>
+
+          {quoteApiBase ? (
+            <div className="calc-api-save">
+              <p className="calc-api-save-hint">{t.saveHint}</p>
+              <div className="calc-api-save-row">
+                <button
+                  type="button"
+                  className="calc-api-save-btn"
+                  disabled={saveState === 'loading'}
+                  onClick={handleSaveToServer}
+                >
+                  {saveState === 'loading' ? t.saveSaving : t.saveToServer}
+                </button>
+              </div>
+              {saveState === 'ok' && saveUrl && (
+                <div className="calc-api-save-result" role="status">
+                  <p className="calc-api-save-label">{t.saveSaved}</p>
+                  <code className="calc-api-url">{saveUrl}</code>
+                  <div className="calc-api-save-actions">
+                    <a
+                      href={saveUrl}
+                      className="btn-ghost calc-api-save-open"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {t.saveOpen}
+                    </a>
+                    <button
+                      type="button"
+                      className="btn-ghost"
+                      onClick={handleCopySaveLink}
+                      aria-label={t.saveCopyLinkAria}
+                    >
+                      {saveLinkCopyState === 'ok'
+                        ? t.saveLinkCopied
+                        : t.saveCopyLink}
+                    </button>
+                  </div>
+                </div>
+              )}
+              {saveState === 'err' && saveErr && (
+                <p className="calc-api-save-err" role="alert">
+                  {t.saveFail}: {saveErr}
+                </p>
+              )}
+            </div>
+          ) : null}
         </div>
       </div>
     </section>

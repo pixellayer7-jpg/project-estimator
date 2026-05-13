@@ -27,6 +27,7 @@ jobs:
         env:
           VITE_SITE_URL: https://pixellayer7-jpg.github.io/project-estimator
           VITE_FORMSPREE_FORM_ID: ${{ secrets.FORMSPREE_FORM_ID }}
+          VITE_QUOTE_API_URL: ${{ secrets.VITE_QUOTE_API_URL }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
