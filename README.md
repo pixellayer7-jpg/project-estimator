@@ -1,5 +1,8 @@
 # Project Quote Calculator — PixelLayer L.L.C
 
+> **Portfolio highlight** · [My GitHub](https://github.com/pixellayer7-jpg) · **Live demo:** [project-estimator](https://pixellayer7-jpg.github.io/project-estimator/)  
+> React 18 · Vite 5 · Vitest · i18n (EN/中文) · GitHub Actions CI · optional Fastify API · **Good for interviews:** config-driven pricing, `?load=<uuid>` share, tests & a11y.
+
 A small React app that gives clients an **estimated price range** for common project types (landing page, company website, dashboard). Options include add-ons (design from scratch, multilingual, rush) and extra sections. Final CTA links to email for a fixed quote.
 
 ![React](https://img.shields.io/badge/React-18-61dafb?logo=react)
@@ -27,12 +30,12 @@ Static **`<head>`** tweaks: `referrer` policy for outbound privacy, and **precon
 - **Header** — Link to this repository on GitHub.
 - **Landmarks** — `banner` / `contentinfo` roles for assistive tech; Twitter Card meta for sharing.
 - **Config-driven** — Edit `src/data/pricing.js` to change base prices and add-ons (no code logic changes needed).
-- **SEO (deploy)** — Set `VITE_SITE_URL` at build time to inject `rel=canonical`, `og:url`, `og:image` (site `favicon.svg`), and matching Twitter tags (see [Deploy](#deploy)).
+- **SEO (deploy)** — Set `VITE_SITE_URL` at build time to inject `rel=canonical`, `og:url`, `og:image` (site `favicon.svg`), and matching Twitter tags (see [Deploy](#deploy)). With **`VITE_QUOTE_API_URL`** also set, after saving a snapshot the UI offers a **`?load=<uuid>`** link on this same site for clients who should open the calculator UI (not raw JSON).
 - **Contact form (optional)** — Set `VITE_FORMSPREE_FORM_ID` to show a Formspree-powered message form below the calculator (no mail client required). Fields have sensible **max lengths**; the lazy-loaded chunk shows a short **loading** status for assistive tech.
 - **Dark UI hints** — `color-scheme: dark` in HTML/CSS so browsers use dark scrollbars and native controls where supported.
 - **Quote reference** — Each device gets a persisted **UUID** for correspondence (email subject prefix + summary body). **Reset** issues a new id. No server; fine for lightweight commercial use until you add a backend.
 - **Print / PDF** — “Print / Save as PDF” opens the system print dialog so clients can save the styled estimate (same print rules as before).
-- **Save online copy (optional)** — If **`VITE_QUOTE_API_URL`** is set at build time, users can **POST** the current estimate to **estimator-api** and get a **shareable link** to the stored JSON (configure **CORS** on the API for your site origin).
+- **Save online copy (optional)** — If **`VITE_QUOTE_API_URL`** is set at build time, users can **POST** the current estimate to **estimator-api** and get a **shareable API link** to the stored JSON (configure **CORS** on the API for your site origin). Opening the calculator with **`?load=<uuid>`** (same API URL) **GET**s that quote and restores project type, add-ons, extras, and **quote reference** when valid; users can also paste a raw UUID, API URL, or calculator **`?load=`** URL into the calculator to restore a saved estimate manually. The snapshot’s **`lang`** (`en` / `zh`) also switches the header language when present. If **`VITE_SITE_URL`** is set as well, after a successful save the UI shows a **calculator page** URL with **`?load=<uuid>`** for sharing the full UI experience. **Browser back/forward** (`popstate`) re-reads the URL so returning to a history entry that still contains **`?load=`** loads that quote again.
 
 ## Commercial readiness / 商单准备（无需新账号即可完成的部分）
 
@@ -51,7 +54,7 @@ Static **`<head>`** tweaks: `referrer` policy for outbound privacy, and **precon
 - **English** — Estimates are indicative; email **pixellayer7@gmail.com** for a written proposal.
 - **中文** — 页面数字仅为估算；正式报价请发邮件至 **pixellayer7@gmail.com**。
 
-Related: [PixelLayer landing page repo](https://github.com/pixellayer7-jpg/1) · [estimator-api](https://github.com/pixellayer7-jpg/estimator-api) **v0.3.13+** — optional backend: `POST` / `GET` quote by **UUID** id (malformed id → 400), **`GET /api/v1/quotes?limit=`** list (no `summary` in list items; protect in production); responses set **`X-Content-Type-Options: nosniff`**; **`POST`** JSON body max **256 KiB**. This calculator can **POST** the same snapshot from the UI when **`VITE_QUOTE_API_URL`** is set at build time.
+Related: [PixelLayer landing page repo](https://github.com/pixellayer7-jpg/1) · [estimator-api](https://github.com/pixellayer7-jpg/estimator-api) **v0.4.3+** — optional backend: `POST` / `GET` quote by **UUID** id (malformed id → 400), **`GET /api/v1/quotes?limit=`** list (no `summary` in list items; set **`LIST_QUOTES_TOKEN`** in production to require Bearer auth); **`POST`** body validated with JSON Schema (invalid body → 400 `Invalid request body`); **`extraSections`** persisted as a **string** (numeric JSON values are coerced); responses set **`X-Content-Type-Options: nosniff`**; **`POST`** JSON body max **256 KiB**. This calculator can **POST** the same snapshot from the UI when **`VITE_QUOTE_API_URL`** is set at build time, and **hydrate from `?load=<uuid>`**.
 
 ## Tech
 
