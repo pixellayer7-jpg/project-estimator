@@ -10,7 +10,7 @@ A small React app that gives clients an **estimated price range** for common pro
 [![CI](https://github.com/pixellayer7-jpg/project-estimator/actions/workflows/ci.yml/badge.svg)](https://github.com/pixellayer7-jpg/project-estimator/actions/workflows/ci.yml)
 [![Pages](https://github.com/pixellayer7-jpg/project-estimator/actions/workflows/pages.yml/badge.svg)](https://github.com/pixellayer7-jpg/project-estimator/actions/workflows/pages.yml)
 
-**Live demo:** [https://pixellayer7-jpg.github.io/project-estimator/](https://pixellayer7-jpg.github.io/project-estimator/) — works after **Settings → Pages → GitHub Actions** is enabled and a deploy succeeds.
+**Live demo:** [https://pixellayer7-jpg.github.io/project-estimator/](https://pixellayer7-jpg.github.io/project-estimator/) · **Marketing site:** [https://pixellayer7-jpg.github.io/1/](https://pixellayer7-jpg.github.io/1/)
 
 Static **`<head>`** tweaks: `referrer` policy for outbound privacy, and **preconnect** to Google Fonts (used in `index.css`).
 
