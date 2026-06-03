@@ -1,5 +1,6 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import Calculator from './components/Calculator'
+import { GITHUB_PROFILE, LANDING_URL } from './config/site'
 
 const ContactForm = lazy(() => import('./components/ContactForm'))
 
@@ -29,6 +30,10 @@ export default function App() {
         : 'Project Quote Calculator — PixelLayer L.L.C'
   }, [lang])
 
+  const handleHydratedLang = useCallback((next) => {
+    if (next === 'en' || next === 'zh') setLang(next)
+  }, [])
+
   return (
     <>
       <a href="#main-content" className="skip-link">
@@ -39,12 +44,25 @@ export default function App() {
       </a>
       <header className="header" role="banner">
         <div className="container header-inner">
-          <a href="#main-content" className="logo">
+          <a
+            href={LANDING_URL}
+            className="logo"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             PixelLayer L.L.C
           </a>
           <div className="header-actions no-print">
             <a
-              href="https://github.com/pixellayer7-jpg/project-estimator"
+              href={LANDING_URL}
+              className="header-link"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {lang === 'en' ? 'Main site' : '主站'}
+            </a>
+            <a
+              href={`${GITHUB_PROFILE}/project-estimator`}
               className="header-link"
               target="_blank"
               rel="noopener noreferrer"
@@ -77,7 +95,7 @@ export default function App() {
         </div>
       </header>
       <main id="main-content">
-        <Calculator lang={lang} />
+        <Calculator lang={lang} onHydratedLang={handleHydratedLang} />
         <Suspense
           fallback={
             <p
@@ -96,14 +114,18 @@ export default function App() {
         <div className="container">
           <p className="footer-text">
             © {new Date().getFullYear()} PixelLayer L.L.C —{' '}
-            <a href="mailto:pixellayer7@gmail.com">pixellayer7@gmail.com</a>
+            <a href={`mailto:pixellayer7@gmail.com`}>pixellayer7@gmail.com</a>
+            {' · '}
+            <a href={LANDING_URL} target="_blank" rel="noopener noreferrer">
+              {lang === 'en' ? 'Marketing site' : '营销主站'}
+            </a>
             {' · '}
             <a
-              href="https://github.com/pixellayer7-jpg/1"
+              href={`${GITHUB_PROFILE}/project-estimator`}
               target="_blank"
               rel="noopener noreferrer"
             >
-              {lang === 'en' ? 'Main site repo' : '主站仓库'}
+              {lang === 'en' ? 'Source' : '源码'}
             </a>
           </p>
         </div>

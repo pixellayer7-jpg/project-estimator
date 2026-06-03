@@ -128,6 +128,13 @@ input:focus-visible {
   opacity: 0.9;
 }
 
+.calc-load-hint {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: -0.75rem 0 1.25rem;
+  line-height: 1.45;
+}
+
 .calc-ref {
   font-size: 0.8rem;
   color: var(--text-muted);
@@ -500,6 +507,40 @@ input:focus-visible {
   margin-bottom: 0.75rem;
 }
 
+.calc-api-load-form {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.calc-api-load-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+}
+
+.calc-api-load-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem;
+}
+
+.calc-api-load-input {
+  min-height: 48px;
+  width: 100%;
+  padding: 0.65rem 0.8rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: rgba(15, 23, 42, 0.75);
+  color: var(--text);
+  font: inherit;
+}
+
+.calc-api-load-input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .calc-api-save-row {
   display: flex;
   flex-wrap: wrap;
@@ -550,6 +591,16 @@ input:focus-visible {
   margin-bottom: 0.5rem;
 }
 
+.calc-api-save-label--sub {
+  margin-top: 0.85rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--border);
+}
+
+.calc-api-save-site .calc-api-url {
+  margin-bottom: 0.75rem;
+}
+
 .calc-api-url {
   display: block;
   font-size: 0.75rem;
@@ -574,6 +625,12 @@ input:focus-visible {
   margin-top: 0.75rem;
   font-size: 0.9rem;
   color: #f87171;
+}
+
+@media (max-width: 640px) {
+  .calc-api-load-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 .contact-suspense-fallback {

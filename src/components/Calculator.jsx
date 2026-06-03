@@ -1,7 +1,18 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { projectTypes, addOns, calculateQuote } from '../data/pricing'
 import { buildMailtoHref, buildQuoteSummary } from '../utils/quoteSummary'
-import { normalizeQuoteApiBase, postQuoteSnapshot } from '../utils/quoteApi'
+import {
+  buildCalculatorLoadUrl,
+  extractQuoteIdFromInput,
+  getQuoteById,
+  normalizeQuoteApiBase,
+  postQuoteSnapshot,
+  QUOTE_UUID_RE,
+} from '../utils/quoteApi'
+import {
+  clampExtraSectionsString,
+  mapQuoteRowToForm,
+} from '../utils/quoteHydrate'
 import {
   clearEstimatorForm,
   clearQuoteRef,
@@ -52,6 +63,25 @@ const STRINGS_EN = {
   saveFail: 'Save failed',
   saveHint:
     'Optional: stores a snapshot on your estimator-api. Set VITE_QUOTE_API_URL at build time and allow CORS for this site.',
+  saveSiteIntro:
+    'Calculator page (opens with this estimate) — set VITE_SITE_URL at build time:',
+  saveOpenCalc: 'Open calculator',
+  saveCopyCalcLink: 'Copy calculator link',
+  saveCopyCalcLinkAria:
+    'Copy calculator URL with ?load= to restore this estimate in the UI',
+  saveCalcLinkCopied: 'Calculator link copied!',
+  saveShareCalc: 'Share',
+  saveShareCalcAria: 'Share calculator link using your device',
+  loadLoading: 'Loading shared estimate…',
+  loadOk: 'Loaded estimate from your link.',
+  loadErr: 'Could not load link',
+  loadManualTitle: 'Load a saved estimate',
+  loadManualHint:
+    'Paste a saved quote UUID, API link, or calculator share link.',
+  loadManualLabel: 'Saved quote link or UUID',
+  loadManualPlaceholder: 'Paste UUID or ?load= link',
+  loadManualAction: 'Load estimate',
+  loadManualInvalid: 'Enter a valid saved quote UUID or link.',
 }
 
 const STRINGS_ZH = {
@@ -87,6 +117,23 @@ const STRINGS_ZH = {
   saveFail: '保存失败',
   saveHint:
     '可选：把当前估算快照存到你的 estimator-api。构建时设置 VITE_QUOTE_API_URL，并在 API 上为本站配置 CORS。',
+  saveSiteIntro:
+    '计算器页面（打开后自动载入此估算）— 构建时设置 VITE_SITE_URL：',
+  saveOpenCalc: '打开计算器',
+  saveCopyCalcLink: '复制计算器链接',
+  saveCopyCalcLinkAria: '复制带 ?load= 的计算器地址，在界面中恢复此估算',
+  saveCalcLinkCopied: '计算器链接已复制！',
+  saveShareCalc: '分享',
+  saveShareCalcAria: '通过系统分享菜单发送计算器链接',
+  loadLoading: '正在加载分享的估算…',
+  loadOk: '已从链接载入估算。',
+  loadErr: '无法加载链接',
+  loadManualTitle: '载入已保存估算',
+  loadManualHint: '粘贴已保存报价 UUID、API 链接或计算器分享链接。',
+  loadManualLabel: '已保存报价链接或 UUID',
+  loadManualPlaceholder: '粘贴 UUID 或 ?load= 链接',
+  loadManualAction: '载入估算',
+  loadManualInvalid: '请输入有效的已保存报价 UUID 或链接。',
 }
 
 const defaultForm = {
@@ -95,15 +142,13 @@ const defaultForm = {
   extraSections: '0',
 }
 
-function clampExtraSectionsString(raw) {
-  const n = parseInt(String(raw), 10)
-  if (!Number.isFinite(n)) return '0'
-  return String(Math.min(20, Math.max(0, n)))
-}
-
-export default function Calculator({ lang = 'en' }) {
+export default function Calculator({ lang = 'en', onHydratedLang }) {
   const quoteApiBase = useMemo(
     () => normalizeQuoteApiBase(import.meta.env.VITE_QUOTE_API_URL),
+    []
+  )
+  const siteUrlBase = useMemo(
+    () => normalizeQuoteApiBase(import.meta.env.VITE_SITE_URL),
     []
   )
   const [form, setForm] = useState(() => ({
@@ -115,9 +160,16 @@ export default function Calculator({ lang = 'en' }) {
   const [copyAnnounce, setCopyAnnounce] = useState('')
   const [saveState, setSaveState] = useState('idle')
   const [saveUrl, setSaveUrl] = useState(null)
+  const [saveSiteUrl, setSaveSiteUrl] = useState(null)
   const [saveErr, setSaveErr] = useState('')
   const [saveLinkCopyState, setSaveLinkCopyState] = useState('idle')
+  const [saveSiteLinkCopyState, setSaveSiteLinkCopyState] = useState('idle')
+  const [loadRemote, setLoadRemote] = useState('idle')
+  const [loadRemoteErr, setLoadRemoteErr] = useState('')
+  const [manualLoadInput, setManualLoadInput] = useState('')
   const saveAbortRef = useRef(null)
+  const hydrateAbortRef = useRef(null)
+  const hydrateGen = useRef(0)
   const projectBtnRefs = useRef([])
 
   const { projectType, addOnIds, extraSections } = form
@@ -155,9 +207,83 @@ export default function Calculator({ lang = 'en' }) {
     saveAbortRef.current?.abort()
     setSaveState('idle')
     setSaveUrl(null)
+    setSaveSiteUrl(null)
     setSaveErr('')
     setSaveLinkCopyState('idle')
+    setSaveSiteLinkCopyState('idle')
   }, [lang, projectType, addOnIds, extraSections, quoteRef, min, max])
+
+  const hydrateQuoteId = useCallback(
+    async (loadId, { stripUrl = false } = {}) => {
+      if (!quoteApiBase || !QUOTE_UUID_RE.test(loadId)) return
+
+      hydrateAbortRef.current?.abort()
+      const ac = new AbortController()
+      hydrateAbortRef.current = ac
+      const gen = ++hydrateGen.current
+      setLoadRemote('loading')
+      setLoadRemoteErr('')
+      try {
+        const row = await getQuoteById(quoteApiBase, loadId, {
+          signal: ac.signal,
+        })
+        if (gen !== hydrateGen.current) return
+        const {
+          form: nextForm,
+          quoteRef: rowRef,
+          lang: rowLang,
+        } = mapQuoteRowToForm(row)
+        setForm(nextForm)
+        if (rowRef) {
+          setQuoteRef(rowRef)
+          saveQuoteRef(rowRef)
+        }
+        saveEstimatorForm(nextForm)
+        setLoadRemote('ok')
+        if (rowLang) onHydratedLang?.(rowLang)
+        if (stripUrl) {
+          const path = window.location.pathname || '/'
+          window.history.replaceState(
+            {},
+            '',
+            path + (window.location.hash || '')
+          )
+        }
+      } catch (e) {
+        if (ac.signal.aborted) return
+        if (gen !== hydrateGen.current) return
+        setLoadRemote('err')
+        setLoadRemoteErr(e instanceof Error ? e.message : String(e))
+      }
+    },
+    [quoteApiBase, onHydratedLang]
+  )
+
+  useEffect(() => {
+    if (!quoteApiBase) return
+
+    const tryHydrate = (fromPopState) => {
+      const params = new URLSearchParams(window.location.search)
+      const loadId = params.get('load')
+      if (!loadId || !QUOTE_UUID_RE.test(loadId)) {
+        if (fromPopState) {
+          setLoadRemote('idle')
+          setLoadRemoteErr('')
+        }
+        return
+      }
+      void hydrateQuoteId(loadId, { stripUrl: true })
+    }
+
+    tryHydrate(false)
+    const onPopState = () => tryHydrate(true)
+    window.addEventListener('popstate', onPopState)
+    return () => {
+      hydrateAbortRef.current?.abort()
+      hydrateAbortRef.current = null
+      window.removeEventListener('popstate', onPopState)
+    }
+  }, [quoteApiBase, hydrateQuoteId])
 
   const setProjectType = (id) => setForm((f) => ({ ...f, projectType: id }))
 
@@ -171,11 +297,18 @@ export default function Calculator({ lang = 'en' }) {
   }
 
   function handleReset() {
+    hydrateGen.current += 1
+    hydrateAbortRef.current?.abort()
+    hydrateAbortRef.current = null
+    setLoadRemote('idle')
+    setLoadRemoteErr('')
     saveAbortRef.current?.abort()
     setSaveState('idle')
     setSaveUrl(null)
+    setSaveSiteUrl(null)
     setSaveErr('')
     setSaveLinkCopyState('idle')
+    setSaveSiteLinkCopyState('idle')
     clearEstimatorForm()
     clearQuoteRef()
     const nextRef = crypto.randomUUID()
@@ -184,6 +317,17 @@ export default function Calculator({ lang = 'en' }) {
     const next = { ...defaultForm }
     setForm(next)
     saveEstimatorForm(next)
+  }
+
+  function handleManualLoadSubmit(e) {
+    e.preventDefault()
+    const id = extractQuoteIdFromInput(manualLoadInput)
+    if (!id) {
+      setLoadRemote('err')
+      setLoadRemoteErr(t.loadManualInvalid)
+      return
+    }
+    void hydrateQuoteId(id)
   }
 
   function handlePrintEstimate() {
@@ -248,7 +392,9 @@ export default function Calculator({ lang = 'en' }) {
     setSaveState('loading')
     setSaveErr('')
     setSaveUrl(null)
+    setSaveSiteUrl(null)
     setSaveLinkCopyState('idle')
+    setSaveSiteLinkCopyState('idle')
     try {
       const body = {
         projectType,
@@ -267,6 +413,9 @@ export default function Calculator({ lang = 'en' }) {
       const viewUrl = `${quoteApiBase}/api/v1/quotes/${data.id}`
       setSaveState('ok')
       setSaveUrl(viewUrl)
+      setSaveSiteUrl(
+        siteUrlBase ? buildCalculatorLoadUrl(siteUrlBase, data.id) : null
+      )
     } catch (e) {
       if (ac.signal.aborted) return
       setSaveState('err')
@@ -285,6 +434,34 @@ export default function Calculator({ lang = 'en' }) {
     }
   }
 
+  async function handleCopySaveSiteLink() {
+    if (!saveSiteUrl) return
+    try {
+      await navigator.clipboard.writeText(saveSiteUrl)
+      setSaveSiteLinkCopyState('ok')
+      setTimeout(() => setSaveSiteLinkCopyState('idle'), 2000)
+    } catch {
+      setSaveSiteLinkCopyState('idle')
+    }
+  }
+
+  async function handleShareSaveSiteLink() {
+    if (!saveSiteUrl || typeof navigator.share !== 'function') return
+    try {
+      await navigator.share({
+        title: isEn(lang)
+          ? 'PixelLayer quote estimate'
+          : 'PixelLayer 项目报价估算',
+        url: saveSiteUrl,
+      })
+    } catch (e) {
+      if (e instanceof Error && e.name === 'AbortError') return
+    }
+  }
+
+  const canNativeShare =
+    typeof navigator !== 'undefined' && typeof navigator.share === 'function'
+
   const t = isEn(lang) ? STRINGS_EN : STRINGS_ZH
 
   return (
@@ -295,6 +472,18 @@ export default function Calculator({ lang = 'en' }) {
         </h2>
         <p className="section-subtitle">{t.subtitle}</p>
         <p className="calc-persist-hint">{t.persistedHint}</p>
+        {quoteApiBase && loadRemote !== 'idle' ? (
+          <p className="calc-load-hint" role="status" aria-live="polite">
+            {loadRemote === 'loading' && t.loadLoading}
+            {loadRemote === 'ok' && t.loadOk}
+            {loadRemote === 'err' && (
+              <>
+                {t.loadErr}
+                {loadRemoteErr ? `: ${loadRemoteErr}` : ''}
+              </>
+            )}
+          </p>
+        ) : null}
 
         <span className="sr-only" aria-live="assertive" aria-atomic="true">
           {copyAnnounce}
@@ -453,6 +642,36 @@ export default function Calculator({ lang = 'en' }) {
 
           {quoteApiBase ? (
             <div className="calc-api-save">
+              <form
+                className="calc-api-load-form"
+                onSubmit={handleManualLoadSubmit}
+              >
+                <p className="calc-api-load-title">{t.loadManualTitle}</p>
+                <p className="calc-api-save-hint">{t.loadManualHint}</p>
+                <label className="sr-only" htmlFor="saved-quote-input">
+                  {t.loadManualLabel}
+                </label>
+                <div className="calc-api-load-row">
+                  <input
+                    id="saved-quote-input"
+                    className="calc-api-load-input"
+                    type="text"
+                    value={manualLoadInput}
+                    onChange={(e) => setManualLoadInput(e.target.value)}
+                    placeholder={t.loadManualPlaceholder}
+                    autoComplete="off"
+                  />
+                  <button
+                    type="submit"
+                    className="calc-api-save-btn"
+                    disabled={loadRemote === 'loading'}
+                  >
+                    {loadRemote === 'loading'
+                      ? t.loadLoading
+                      : t.loadManualAction}
+                  </button>
+                </div>
+              </form>
               <p className="calc-api-save-hint">{t.saveHint}</p>
               <div className="calc-api-save-row">
                 <button
@@ -488,6 +707,43 @@ export default function Calculator({ lang = 'en' }) {
                         : t.saveCopyLink}
                     </button>
                   </div>
+                  {saveSiteUrl ? (
+                    <div className="calc-api-save-site">
+                      <p className="calc-api-save-label calc-api-save-label--sub">
+                        {t.saveSiteIntro}
+                      </p>
+                      <code className="calc-api-url">{saveSiteUrl}</code>
+                      <div className="calc-api-save-actions">
+                        <a
+                          href={saveSiteUrl}
+                          className="btn-ghost calc-api-save-open"
+                          rel="noopener noreferrer"
+                        >
+                          {t.saveOpenCalc}
+                        </a>
+                        <button
+                          type="button"
+                          className="btn-ghost"
+                          onClick={handleCopySaveSiteLink}
+                          aria-label={t.saveCopyCalcLinkAria}
+                        >
+                          {saveSiteLinkCopyState === 'ok'
+                            ? t.saveCalcLinkCopied
+                            : t.saveCopyCalcLink}
+                        </button>
+                        {canNativeShare ? (
+                          <button
+                            type="button"
+                            className="btn-ghost"
+                            onClick={handleShareSaveSiteLink}
+                            aria-label={t.saveShareCalcAria}
+                          >
+                            {t.saveShareCalc}
+                          </button>
+                        ) : null}
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               )}
               {saveState === 'err' && saveErr && (

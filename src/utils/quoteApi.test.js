@@ -1,9 +1,33 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { normalizeQuoteApiBase, postQuoteSnapshot } from './quoteApi'
+import {
+  buildCalculatorLoadUrl,
+  extractQuoteIdFromInput,
+  getQuoteById,
+  normalizeQuoteApiBase,
+  postQuoteSnapshot,
+} from './quoteApi'
 
 describe('quoteApi', () => {
   afterEach(() => {
     vi.restoreAllMocks()
+  })
+
+  it('buildCalculatorLoadUrl encodes id in query', () => {
+    const id = 'aaaaaaaa-bbbb-4ccc-8aaa-eeeeeeeeeeee'
+    expect(buildCalculatorLoadUrl('https://calc.test/', id)).toBe(
+      `https://calc.test/?load=${id}`
+    )
+    expect(buildCalculatorLoadUrl('', id)).toBe('')
+  })
+
+  it('extractQuoteIdFromInput supports UUIDs and saved quote links', () => {
+    const id = 'aaaaaaaa-bbbb-4ccc-8aaa-eeeeeeeeeeee'
+    expect(extractQuoteIdFromInput(id)).toBe(id)
+    expect(extractQuoteIdFromInput(`https://calc.test/?load=${id}`)).toBe(id)
+    expect(
+      extractQuoteIdFromInput(`https://api.test/api/v1/quotes/${id}`)
+    ).toBe(id)
+    expect(extractQuoteIdFromInput('not-a-quote')).toBe('')
   })
 
   it('normalizeQuoteApiBase trims and strips slashes', () => {
@@ -59,5 +83,34 @@ describe('quoteApi', () => {
         lang: 'en',
       })
     ).rejects.toThrow('bad')
+  })
+
+  it('getQuoteById throws without fetch when id is not a UUID', async () => {
+    await expect(
+      getQuoteById('https://api.test', 'not-a-uuid')
+    ).rejects.toThrow('Invalid id')
+  })
+
+  it('getQuoteById returns row on 200', async () => {
+    const id = 'aaaaaaaa-bbbb-4ccc-8aaa-eeeeeeeeeeee'
+    const row = {
+      id,
+      projectType: 'landing',
+      addOnIds: [],
+      extraSections: '0',
+      min: 800,
+      max: 1200,
+    }
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => JSON.stringify(row),
+    })
+    const out = await getQuoteById('https://api.test', id)
+    expect(out.projectType).toBe('landing')
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      `https://api.test/api/v1/quotes/${id}`,
+      expect.objectContaining({ method: 'GET' })
+    )
   })
 })

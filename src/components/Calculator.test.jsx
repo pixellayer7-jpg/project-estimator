@@ -13,6 +13,7 @@ describe('Calculator', () => {
   afterEach(() => {
     vi.unstubAllEnvs()
     vi.restoreAllMocks()
+    window.history.replaceState({}, '', '/')
   })
 
   it('renders default landing estimate in English', () => {
@@ -135,6 +136,129 @@ describe('Calculator', () => {
     ).not.toBeInTheDocument()
   })
 
+  it('hydrates from ?load= when VITE_QUOTE_API_URL is set', async () => {
+    vi.stubEnv('VITE_QUOTE_API_URL', 'https://api.example.com')
+    const loadId = 'aaaaaaaa-bbbb-4ccc-8aaa-eeeeeeeeeeee'
+    const quoteRefRow = 'bbbbbbbb-bbbb-4bbb-8ccc-cccccccccccc'
+    const replaceState = vi.spyOn(window.history, 'replaceState')
+    window.history.replaceState({}, '', `/?load=${loadId}`)
+    const row = {
+      projectType: 'website',
+      addOnIds: ['design'],
+      extraSections: '2',
+      min: 2000,
+      max: 3500,
+      quoteRef: quoteRefRow,
+    }
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => JSON.stringify(row),
+    })
+    render(<Calculator lang="en" />)
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Loaded estimate from your link/i)
+      ).toBeInTheDocument()
+    })
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      `https://api.example.com/api/v1/quotes/${loadId}`,
+      expect.objectContaining({ method: 'GET' })
+    )
+    expect(
+      screen.getByRole('radio', { name: /Company \/ Agency Website/i })
+    ).toHaveAttribute('aria-checked', 'true')
+    expect(screen.getByText(quoteRefRow)).toBeInTheDocument()
+    expect(replaceState).toHaveBeenCalled()
+    replaceState.mockRestore()
+  })
+
+  it('calls onHydratedLang when snapshot includes lang', async () => {
+    vi.stubEnv('VITE_QUOTE_API_URL', 'https://api.example.com')
+    const loadId = 'aaaaaaaa-bbbb-4ccc-8aaa-eeeeeeeeeeee'
+    const onHydratedLang = vi.fn()
+    window.history.replaceState({}, '', `/?load=${loadId}`)
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () =>
+        JSON.stringify({
+          projectType: 'landing',
+          addOnIds: [],
+          extraSections: '0',
+          lang: 'zh',
+        }),
+    })
+    render(<Calculator lang="en" onHydratedLang={onHydratedLang} />)
+    await waitFor(() => {
+      expect(onHydratedLang).toHaveBeenCalledWith('zh')
+    })
+  })
+
+  it('loads a saved estimate from pasted calculator link', async () => {
+    vi.stubEnv('VITE_QUOTE_API_URL', 'https://api.example.com')
+    const id = 'aaaaaaaa-bbbb-4ccc-8aaa-eeeeeeeeeeee'
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () =>
+        JSON.stringify({
+          projectType: 'dashboard',
+          addOnIds: [],
+          extraSections: '1',
+          min: 3000,
+          max: 5000,
+        }),
+    })
+    const user = userEvent.setup()
+    render(<Calculator lang="en" />)
+    await user.type(
+      screen.getByLabelText(/saved quote link or uuid/i),
+      `https://calc.example.com/?load=${id}`
+    )
+    await user.click(screen.getByRole('button', { name: /^Load estimate$/i }))
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Loaded estimate from your link/i)
+      ).toBeInTheDocument()
+    })
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      `https://api.example.com/api/v1/quotes/${id}`,
+      expect.objectContaining({ method: 'GET' })
+    )
+    expect(screen.getByRole('radio', { name: /Dashboard/i })).toHaveAttribute(
+      'aria-checked',
+      'true'
+    )
+  })
+
+  it('shows validation error for manual saved quote input', async () => {
+    vi.stubEnv('VITE_QUOTE_API_URL', 'https://api.example.com')
+    const user = userEvent.setup()
+    render(<Calculator lang="en" />)
+    await user.type(screen.getByLabelText(/saved quote link or uuid/i), 'bad')
+    await user.click(screen.getByRole('button', { name: /^Load estimate$/i }))
+    expect(
+      screen.getByText(/Enter a valid saved quote UUID or link/i)
+    ).toBeInTheDocument()
+  })
+
+  it('shows load error when GET quote fails', async () => {
+    vi.stubEnv('VITE_QUOTE_API_URL', 'https://api.example.com')
+    const loadId = 'aaaaaaaa-bbbb-4ccc-8aaa-eeeeeeeeeeee'
+    window.history.replaceState({}, '', `/?load=${loadId}`)
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 404,
+      text: async () => JSON.stringify({ error: 'Not found' }),
+    })
+    render(<Calculator lang="en" />)
+    await waitFor(() => {
+      expect(screen.getByText(/Could not load link/i)).toBeInTheDocument()
+    })
+    expect(screen.getByText(/Not found/)).toBeInTheDocument()
+  })
+
   it('POSTs snapshot when save clicked with API URL set', async () => {
     vi.stubEnv('VITE_QUOTE_API_URL', 'https://api.example.com')
     const id = 'aaaaaaaa-bbbb-4ccc-dddd-eeeeeeeeeeee'
@@ -163,5 +287,74 @@ describe('Calculator', () => {
         screen.getByText(new RegExp(`/api/v1/quotes/${id}`))
       ).toBeInTheDocument()
     })
+  })
+
+  it('shows calculator ?load= link when VITE_SITE_URL is set', async () => {
+    vi.stubEnv('VITE_QUOTE_API_URL', 'https://api.example.com')
+    vi.stubEnv('VITE_SITE_URL', 'https://calc.example.com')
+    const id = 'aaaaaaaa-bbbb-4ccc-8aaa-eeeeeeeeeeee'
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 201,
+      text: async () =>
+        JSON.stringify({
+          id,
+          createdAt: '2026-01-01T00:00:00.000Z',
+          path: `/api/v1/quotes/${id}`,
+        }),
+    })
+    globalThis.fetch = fetchMock
+    const user = userEvent.setup()
+    render(<Calculator lang="en" />)
+    await user.click(screen.getByRole('button', { name: /save online copy/i }))
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          new RegExp(
+            `https://calc\\.example\\.com/\\?load=${id.replace(/-/g, '\\-')}`
+          )
+        )
+      ).toBeInTheDocument()
+    })
+  })
+
+  it('shows native Share when navigator.share exists and site URL saved', async () => {
+    vi.stubEnv('VITE_QUOTE_API_URL', 'https://api.example.com')
+    vi.stubEnv('VITE_SITE_URL', 'https://calc.example.com')
+    const id = 'aaaaaaaa-bbbb-4ccc-8aaa-eeeeeeeeeeee'
+    const share = vi.fn().mockResolvedValue(undefined)
+    vi.stubGlobal('navigator', { ...navigator, share })
+    navigator.share = share
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 201,
+      text: async () =>
+        JSON.stringify({
+          id,
+          createdAt: '2026-01-01T00:00:00.000Z',
+          path: `/api/v1/quotes/${id}`,
+          loadQuery: `?load=${id}`,
+        }),
+    })
+    const user = userEvent.setup()
+    render(<Calculator lang="en" />)
+    await user.click(screen.getByRole('button', { name: /save online copy/i }))
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', {
+          name: /share calculator link using your device/i,
+        })
+      ).toBeInTheDocument()
+    })
+    await user.click(
+      screen.getByRole('button', {
+        name: /share calculator link using your device/i,
+      })
+    )
+    expect(share).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: `https://calc.example.com/?load=${id}`,
+      })
+    )
   })
 })
