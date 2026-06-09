@@ -13,6 +13,7 @@ import {
   clampExtraSectionsString,
   mapQuoteRowToForm,
 } from '../utils/quoteHydrate'
+import { LANDING_URL } from '../config/site'
 import {
   clearEstimatorForm,
   clearQuoteRef,
@@ -30,6 +31,7 @@ const STRINGS_EN = {
   title: 'Get an estimated quote',
   subtitle:
     'Select your project type and options. Final price depends on scope and timeline.',
+  mainSite: '← PixelLayer marketing site',
   projectLabel: 'Project type',
   addOnsLabel: 'Add-ons',
   extraLabel: 'Extra sections or pages',
@@ -87,6 +89,7 @@ const STRINGS_EN = {
 const STRINGS_ZH = {
   title: '获取项目报价估算',
   subtitle: '选择项目类型与选项，最终报价将根据具体需求与周期确定。',
+  mainSite: '← PixelLayer 营销主站',
   projectLabel: '项目类型',
   addOnsLabel: '附加项',
   extraLabel: '额外区块或页面数量',
@@ -471,6 +474,11 @@ export default function Calculator({ lang = 'en', onHydratedLang }) {
           {t.title}
         </h2>
         <p className="section-subtitle">{t.subtitle}</p>
+        <p className="calc-site-link">
+          <a href={LANDING_URL} target="_blank" rel="noopener noreferrer">
+            {t.mainSite}
+          </a>
+        </p>
         <p className="calc-persist-hint">{t.persistedHint}</p>
         {quoteApiBase && loadRemote !== 'idle' ? (
           <p className="calc-load-hint" role="status" aria-live="polite">

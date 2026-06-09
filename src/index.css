@@ -121,6 +121,15 @@ input:focus-visible {
   font-size: 1rem;
 }
 
+.calc-site-link {
+  margin: -0.25rem 0 0.75rem;
+  font-size: 0.95rem;
+}
+
+.calc-site-link a {
+  font-weight: 500;
+}
+
 .calc-persist-hint {
   font-size: 0.85rem;
   color: var(--text-muted);
