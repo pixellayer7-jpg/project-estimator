@@ -181,6 +181,36 @@ input:focus-visible {
   font-weight: 500;
 }
 
+/* Ecosystem strip */
+.ecosystem-strip {
+  border-bottom: 1px solid var(--border);
+  background: rgba(30, 41, 59, 0.5);
+  font-size: 0.85rem;
+}
+
+.ecosystem-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  padding: 0.65rem 0;
+}
+
+.ecosystem-label {
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-right: 0.25rem;
+}
+
+.ecosystem-sep {
+  color: var(--border);
+}
+
+.ecosystem-inner a {
+  font-weight: 600;
+  color: var(--accent);
+}
+
 /* Header */
 .header {
   border-bottom: 1px solid var(--border);

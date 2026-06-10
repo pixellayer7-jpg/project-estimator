@@ -1,5 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import Calculator from './components/Calculator'
+import EcosystemStrip from './components/EcosystemStrip'
 import { GITHUB_PROFILE, LANDING_URL } from './config/site'
 
 const ContactForm = lazy(() => import('./components/ContactForm'))
@@ -94,6 +95,7 @@ export default function App() {
           </div>
         </div>
       </header>
+      <EcosystemStrip lang={lang} />
       <main id="main-content">
         <Calculator lang={lang} onHydratedLang={handleHydratedLang} />
         <Suspense
