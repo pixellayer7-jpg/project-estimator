@@ -17,6 +17,7 @@ Static **`<head>`** tweaks: `referrer` policy for outbound privacy, and **precon
 **`public/robots.txt`** — copied to site root on build so crawlers can index the deployed calculator (when hosted at a public URL).
 
 - **EN / 中文** — Language toggle in the header (choice is saved in `localStorage`).
+- **Continue on main site** — Saves estimate to `sessionStorage` and opens the landing **contact form** pre-filled (same `github.io` origin).
 - **Email pre-fill** — “Email this estimate” opens the mail client with subject + body listing project type, add-ons, extras, and USD range.
 - **Copy summary** — One-click copy of the same text for WeChat / other channels.
 - **Preview** — Expandable block shows the exact text that will appear in the email body.
@@ -41,13 +42,13 @@ Static **`<head>`** tweaks: `referrer` policy for outbound privacy, and **precon
 
 已在应用内提供：**报价编号**、**邮件主题短码**、**打印/PDF**、**robots.txt**、SEO 元数据、表单与测试。你仍需自行完成（涉及账号或法律）的事项示例：
 
-| You still handle / 需你自行处理   | Why                          |
-| --------------------------------- | ---------------------------- |
-| **Stripe / Lemon Squeezy** 等收款 | 需商户身份与平台注册         |
-| **域名与 DNS**                    | 需购买与解析                 |
-| **Terms of Service / 隐私政策**   | 需律师或模板按司法辖区定稿   |
-| **企业邮箱与 SPF/DKIM**           | 提高邮件送达率               |
-| **服务端存报价、登录、分享链接**  | 需数据库与 API（可后续迭代） |
+| You still handle / 需你自行处理   | Why                                  |
+| --------------------------------- | ------------------------------------ |
+| **Stripe / Lemon Squeezy** 等收款 | 需商户身份与平台注册                 |
+| **域名与 DNS**                    | 需购买与解析                         |
+| **Terms of Service / 隐私政策**   | 站点提供摘要；正式合同仍建议律师定稿 |
+| **企业邮箱与 SPF/DKIM**           | 提高邮件送达率                       |
+| **服务端存报价、登录、分享链接**  | 需数据库与 API（可后续迭代）         |
 
 ## For clients / 给客户
 

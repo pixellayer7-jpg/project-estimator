@@ -15,6 +15,10 @@ import {
 } from '../utils/quoteHydrate'
 import { LANDING_URL } from '../config/site'
 import {
+  buildLandingContactUrl,
+  saveContactHandoff,
+} from '../utils/contactHandoff'
+import {
   clearEstimatorForm,
   clearQuoteRef,
   ensureQuoteRef,
@@ -42,6 +46,9 @@ const STRINGS_EN = {
   cta: 'Email this estimate',
   ctaSub:
     'Your selections are pre-filled in the email body. Add details and send.',
+  ctaSite: 'Continue on main site',
+  ctaSiteSub:
+    'Opens the contact form with this estimate pre-filled (same browser session).',
   reset: 'Reset',
   copySummary: 'Copy summary',
   copied: 'Copied!',
@@ -98,6 +105,8 @@ const STRINGS_ZH = {
   disclaimer: '仅供参考，不构成正式报价；最终范围与价格以书面约定为准。',
   cta: '用邮件发送此估算',
   ctaSub: '邮件正文已预填当前选项，可补充说明后发送。',
+  ctaSite: '在主站继续联系',
+  ctaSiteSub: '打开主站联系表单并预填本估算（需同一浏览器会话）。',
   reset: '重置',
   copySummary: '复制摘要',
   copied: '已复制',
@@ -462,6 +471,11 @@ export default function Calculator({ lang = 'en', onHydratedLang }) {
     }
   }
 
+  function handleContinueOnSite() {
+    saveContactHandoff({ summary, lang, quoteRef, min, max })
+    window.location.href = buildLandingContactUrl(LANDING_URL, lang)
+  }
+
   const canNativeShare =
     typeof navigator !== 'undefined' && typeof navigator.share === 'function'
 
@@ -643,10 +657,20 @@ export default function Calculator({ lang = 'en', onHydratedLang }) {
         </div>
 
         <div className="calc-cta no-print">
-          <a href={mailtoHref} className="btn btn-primary">
-            {t.cta}
-          </a>
-          <p className="calc-cta-sub">{t.ctaSub}</p>
+          <div className="calc-cta-buttons">
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handleContinueOnSite}
+            >
+              {t.ctaSite}
+            </button>
+            <a href={mailtoHref} className="btn btn-outline">
+              {t.cta}
+            </a>
+          </div>
+          <p className="calc-cta-sub">{t.ctaSiteSub}</p>
+          <p className="calc-cta-sub calc-cta-sub--muted">{t.ctaSub}</p>
 
           {quoteApiBase ? (
             <div className="calc-api-save">
