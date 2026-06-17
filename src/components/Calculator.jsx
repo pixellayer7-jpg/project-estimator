@@ -13,9 +13,10 @@ import {
   clampExtraSectionsString,
   mapQuoteRowToForm,
 } from '../utils/quoteHydrate'
-import { LANDING_URL } from '../config/site'
+import { LANDING_URL, EMAIL } from '../config/site'
 import {
   buildLandingContactUrl,
+  isHandoffOriginCompatible,
   saveContactHandoff,
 } from '../utils/contactHandoff'
 import {
@@ -28,8 +29,6 @@ import {
 } from '../utils/storage'
 
 const isEn = (lang) => lang === 'en'
-
-const EMAIL = 'pixellayer7@gmail.com'
 
 const STRINGS_EN = {
   title: 'Get an estimated quote',
@@ -49,6 +48,8 @@ const STRINGS_EN = {
   ctaSite: 'Continue on main site',
   ctaSiteSub:
     'Opens the contact form with this estimate pre-filled (same browser session).',
+  ctaSiteCrossOrigin:
+    'Main-site handoff requires the calculator and landing on the same domain — use email or copy summary instead.',
   reset: 'Reset',
   copySummary: 'Copy summary',
   copied: 'Copied!',
@@ -107,6 +108,7 @@ const STRINGS_ZH = {
   ctaSub: '邮件正文已预填当前选项，可补充说明后发送。',
   ctaSite: '在主站继续联系',
   ctaSiteSub: '打开主站联系表单并预填本估算（需同一浏览器会话）。',
+  ctaSiteCrossOrigin: '跳转主站预填需计算器与主站同域 — 请改用邮件或复制摘要。',
   reset: '重置',
   copySummary: '复制摘要',
   copied: '已复制',
@@ -472,9 +474,20 @@ export default function Calculator({ lang = 'en', onHydratedLang }) {
   }
 
   function handleContinueOnSite() {
-    saveContactHandoff({ summary, lang, quoteRef, min, max })
+    saveContactHandoff({
+      summary,
+      lang,
+      quoteRef,
+      min,
+      max,
+      projectType,
+      addOnIds,
+      extraSections,
+    })
     window.location.href = buildLandingContactUrl(LANDING_URL, lang)
   }
+
+  const handoffOk = isHandoffOriginCompatible(LANDING_URL)
 
   const canNativeShare =
     typeof navigator !== 'undefined' && typeof navigator.share === 'function'
@@ -658,18 +671,24 @@ export default function Calculator({ lang = 'en', onHydratedLang }) {
 
         <div className="calc-cta no-print">
           <div className="calc-cta-buttons">
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={handleContinueOnSite}
-            >
-              {t.ctaSite}
-            </button>
+            {handoffOk ? (
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleContinueOnSite}
+              >
+                {t.ctaSite}
+              </button>
+            ) : (
+              <p className="calc-handoff-warn" role="alert">
+                {t.ctaSiteCrossOrigin}
+              </p>
+            )}
             <a href={mailtoHref} className="btn btn-outline">
               {t.cta}
             </a>
           </div>
-          <p className="calc-cta-sub">{t.ctaSiteSub}</p>
+          {handoffOk ? <p className="calc-cta-sub">{t.ctaSiteSub}</p> : null}
           <p className="calc-cta-sub calc-cta-sub--muted">{t.ctaSub}</p>
 
           {quoteApiBase ? (

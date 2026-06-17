@@ -1,7 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import Calculator from './components/Calculator'
 import EcosystemStrip from './components/EcosystemStrip'
-import { GITHUB_PROFILE, LANDING_URL } from './config/site'
+import { GITHUB_PROFILE, LANDING_URL, EMAIL } from './config/site'
 
 const ContactForm = lazy(() => import('./components/ContactForm'))
 
@@ -10,6 +10,9 @@ const LANG_KEY = 'pixellayer-estimator-lang'
 export default function App() {
   const [lang, setLang] = useState(() => {
     try {
+      const params = new URLSearchParams(window.location.search)
+      const q = params.get('lang')
+      if (q === 'en' || q === 'zh') return q
       const s = localStorage.getItem(LANG_KEY)
       if (s === 'en' || s === 'zh') return s
     } catch {
@@ -116,7 +119,15 @@ export default function App() {
         <div className="container">
           <p className="footer-text">
             © {new Date().getFullYear()} PixelLayer L.L.C —{' '}
-            <a href={`mailto:pixellayer7@gmail.com`}>pixellayer7@gmail.com</a>
+            <a href={`mailto:${EMAIL}`}>{EMAIL}</a>
+            {' · '}
+            <a
+              href={`${LANDING_URL}#legal`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {lang === 'en' ? 'Privacy' : '隐私'}
+            </a>
             {' · '}
             <a href={LANDING_URL} target="_blank" rel="noopener noreferrer">
               {lang === 'en' ? 'Marketing site' : '营销主站'}

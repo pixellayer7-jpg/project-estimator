@@ -25,3 +25,6 @@ jobs:
       - run: npm ci
       - run: npm run check
       - run: npm run build
+        env:
+          VITE_SITE_URL: https://pixellayer7-jpg.github.io/project-estimator
+          VITE_LANDING_URL: https://pixellayer7-jpg.github.io/1/

@@ -357,4 +357,33 @@ describe('Calculator', () => {
       })
     )
   })
+
+  it('continue on main site saves handoff and navigates with utm', async () => {
+    vi.stubEnv('VITE_LANDING_URL', 'https://pixellayer7-jpg.github.io/1/')
+    const href = {
+      value: 'https://pixellayer7-jpg.github.io/project-estimator/',
+    }
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: {
+        origin: 'https://pixellayer7-jpg.github.io',
+        get href() {
+          return href.value
+        },
+        set href(v) {
+          href.value = v
+        },
+      },
+    })
+    sessionStorage.clear()
+    const user = userEvent.setup()
+    render(<Calculator lang="en" />)
+    await user.click(
+      screen.getByRole('button', { name: /continue on main site/i })
+    )
+    const raw = sessionStorage.getItem('pixellayer-contact-handoff')
+    expect(JSON.parse(raw).projectType).toBeTruthy()
+    expect(href.value).toContain('#contact')
+    expect(href.value).toContain('utm_source=project-estimator')
+  })
 })

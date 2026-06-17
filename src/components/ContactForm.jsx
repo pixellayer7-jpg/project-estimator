@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { CONTACT_HANDOFF_KEY } from '../utils/contactHandoff'
 
 const STRINGS_EN = {
   title: 'Send a message',
@@ -39,6 +40,19 @@ export default function ContactForm({ lang }) {
   const statusRef = useRef(null)
 
   useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(CONTACT_HANDOFF_KEY)
+      if (!raw) return
+      const data = JSON.parse(raw)
+      if (typeof data?.summary === 'string' && data.summary.trim()) {
+        setMessage(data.summary)
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [])
+
+  useEffect(() => {
     if (status === 'ok' && statusRef.current) {
       statusRef.current.focus()
     }
@@ -56,6 +70,22 @@ export default function ContactForm({ lang }) {
   async function handleSubmit(e) {
     e.preventDefault()
     setStatus('sending')
+    let quoteRef = ''
+    try {
+      const raw = sessionStorage.getItem(CONTACT_HANDOFF_KEY)
+      if (raw) {
+        const data = JSON.parse(raw)
+        if (typeof data?.quoteRef === 'string') quoteRef = data.quoteRef
+      }
+    } catch {
+      /* ignore */
+    }
+    const subjectBase = en
+      ? 'Message from project quote calculator'
+      : '来自项目报价计算器的留言'
+    const subject = quoteRef
+      ? `${subjectBase} [${quoteRef.slice(0, 8)}]`
+      : subjectBase
     try {
       const res = await fetch(`https://formspree.io/f/${formId}`, {
         method: 'POST',
@@ -67,9 +97,7 @@ export default function ContactForm({ lang }) {
           name,
           email,
           message,
-          _subject: en
-            ? 'Message from project quote calculator'
-            : '来自项目报价计算器的留言',
+          _subject: subject,
         }),
       })
       await res.json().catch(() => ({}))
