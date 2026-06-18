@@ -1,4 +1,4 @@
-import { GITHUB_PROFILE, LANDING_URL } from '../config/site'
+import { ESTIMATOR_URL, GITHUB_PROFILE, LANDING_URL } from '../config/site'
 
 export default function EcosystemStrip({ lang }) {
   const en = lang === 'en'
@@ -20,8 +20,14 @@ export default function EcosystemStrip({ lang }) {
         <span className="ecosystem-sep" aria-hidden="true">
           ·
         </span>
+        <a href={ESTIMATOR_URL} target="_blank" rel="noopener noreferrer">
+          {en ? 'Live calculator' : '在线计算器'}
+        </a>
+        <span className="ecosystem-sep" aria-hidden="true">
+          ·
+        </span>
         <a href={calcRepo} target="_blank" rel="noopener noreferrer">
-          {en ? 'Calculator repo' : '计算器仓库'}
+          {en ? 'Source' : '源码'}
         </a>
         <span className="ecosystem-sep" aria-hidden="true">
           ·
