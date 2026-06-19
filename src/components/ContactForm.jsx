@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { CONTACT_HANDOFF_KEY } from '../utils/contactHandoff'
+import { LANDING_URL } from '../config/site'
 
 const STRINGS_EN = {
   title: 'Send a message',
   subtitle:
-    'No mail app needed — we’ll get your note by email. Or use the address in the footer.',
+    'Quick note from the calculator — or use “Continue on main site” above for the full contact form with project type & timeline.',
+  mainSite: 'Open full contact form on marketing site',
   name: 'Name',
   email: 'Email',
   message: 'Message',
@@ -18,7 +20,9 @@ const STRINGS_EN = {
 
 const STRINGS_ZH = {
   title: '在线留言',
-  subtitle: '无需邮件客户端即可发送；也可使用页脚邮箱直接联系。',
+  subtitle:
+    '在此快速留言 — 或点击上方「在主站继续联系」使用完整表单（含项目类型与时间）。',
+  mainSite: '打开主站完整联系表单',
   name: '姓名',
   email: '邮箱',
   message: '留言内容',
@@ -125,6 +129,11 @@ export default function ContactForm({ lang }) {
           {t.title}
         </h2>
         <p className="section-subtitle">{t.subtitle}</p>
+        <p className="contact-main-site-hint">
+          <a href={`${LANDING_URL.replace(/\/?$/, '/')}#contact`}>
+            {t.mainSite} →
+          </a>
+        </p>
 
         <form
           className="contact-form"

@@ -737,6 +737,16 @@ input:focus-visible {
   margin-top: 2rem;
 }
 
+.contact-main-site-hint {
+  text-align: center;
+  font-size: 0.95rem;
+  margin-top: 0.5rem;
+}
+
+.contact-main-site-hint a {
+  font-weight: 600;
+}
+
 .contact-form {
   margin-top: 1.25rem;
   padding: 1.5rem;
