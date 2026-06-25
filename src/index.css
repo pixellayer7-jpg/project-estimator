@@ -268,6 +268,71 @@ input:focus-visible {
 }
 
 /* Calculator */
+.ecosystem-sep {
+  color: var(--text-muted);
+}
+
+/* Pricing overview (top of calculator page) */
+.pricing-overview {
+  padding: 2rem 0 0.5rem;
+}
+
+.pricing-overview-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.pricing-overview-hint {
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-top: 0.35rem;
+}
+
+.pricing-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.pricing-overview-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  text-decoration: none;
+  color: inherit;
+  transition:
+    border-color 0.2s,
+    transform 0.1s;
+}
+
+.pricing-overview-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.pricing-overview-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.pricing-overview-range {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.pricing-overview-time {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
 .calc {
   padding: 3rem 0 4rem;
 }

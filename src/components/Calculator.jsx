@@ -20,6 +20,10 @@ import {
   saveContactHandoff,
 } from '../utils/contactHandoff'
 import {
+  parseCalculatorUrlParams,
+  stripCalculatorMarketingParams,
+} from '../utils/urlParams'
+import {
   clearEstimatorForm,
   clearQuoteRef,
   ensureQuoteRef,
@@ -272,6 +276,23 @@ export default function Calculator({ lang = 'en', onHydratedLang }) {
     },
     [quoteApiBase, onHydratedLang]
   )
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('load')) return
+    const parsed = parseCalculatorUrlParams()
+    if (!parsed.projectType && !parsed.addOnIds) return
+    setForm((f) => {
+      const next = {
+        ...f,
+        ...(parsed.projectType ? { projectType: parsed.projectType } : {}),
+        ...(parsed.addOnIds ? { addOnIds: parsed.addOnIds } : {}),
+      }
+      saveEstimatorForm(next)
+      return next
+    })
+    stripCalculatorMarketingParams()
+  }, [])
 
   useEffect(() => {
     if (!quoteApiBase) return

@@ -1,5 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import Calculator from './components/Calculator'
+import PricingOverview from './components/PricingOverview'
 import EcosystemStrip from './components/EcosystemStrip'
 import { GITHUB_PROFILE, LANDING_URL, EMAIL } from './config/site'
 
@@ -100,6 +101,7 @@ export default function App() {
       </header>
       <EcosystemStrip lang={lang} />
       <main id="main-content">
+        <PricingOverview lang={lang} />
         <Calculator lang={lang} onHydratedLang={handleHydratedLang} />
         <Suspense
           fallback={

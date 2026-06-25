@@ -358,6 +358,16 @@ describe('Calculator', () => {
     )
   })
 
+  it('apply ?type= from URL on mount', async () => {
+    window.history.replaceState({}, '', '/?type=website')
+    sessionStorage.clear()
+    localStorage.clear()
+    render(<Calculator lang="en" />)
+    expect(
+      screen.getByRole('radio', { name: /Company \/ Agency Website/i })
+    ).toHaveAttribute('aria-checked', 'true')
+  })
+
   it('continue on main site saves handoff and navigates with utm', async () => {
     vi.stubEnv('VITE_LANDING_URL', 'https://pixellayer7-jpg.github.io/1/')
     const href = {

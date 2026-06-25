@@ -17,6 +17,7 @@ Static **`<head>`** tweaks: `referrer` policy for outbound privacy, and **precon
 **`public/robots.txt`** — copied to site root on build so crawlers can index the deployed calculator (when hosted at a public URL).
 
 - **EN / 中文** — Language toggle in the header (choice is saved in `localStorage`).
+- **Pricing overview** — Tier cards at top of page; landing pricing links use `?type=landing|website|dashboard&lang=`
 - **Continue on main site** — Saves estimate to `sessionStorage` and opens the landing **contact form** pre-filled (same `github.io` origin).
 - **Email pre-fill** — “Email this estimate” opens the mail client with subject + body listing project type, add-ons, extras, and USD range.
 - **Copy summary** — One-click copy of the same text for WeChat / other channels.
