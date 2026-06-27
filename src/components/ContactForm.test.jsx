@@ -9,8 +9,9 @@ describe('ContactForm', () => {
     vi.restoreAllMocks()
   })
 
-  it('renders nothing when Formspree id is unset', () => {
+  it('renders nothing when Formspree id and lead API are unset', () => {
     vi.stubEnv('VITE_FORMSPREE_FORM_ID', '')
+    vi.stubEnv('VITE_LEAD_API_URL', '')
     render(<ContactForm lang="en" />)
     expect(screen.queryByRole('form')).not.toBeInTheDocument()
   })

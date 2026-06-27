@@ -111,3 +111,98 @@ export async function postQuoteSnapshot(baseUrl, body, options = {}) {
   }
   return json
 }
+
+export async function listQuotesRecent(
+  baseUrl,
+  token,
+  limit = 20,
+  options = {}
+) {
+  const { signal } = options
+  const url = `${baseUrl}/api/v1/quotes?limit=${encodeURIComponent(String(limit))}`
+  const headers = { Accept: 'application/json' }
+  if (token) headers.Authorization = `Bearer ${token}`
+  const res = await fetch(url, { method: 'GET', headers, signal })
+  const text = await res.text()
+  let json = {}
+  try {
+    json = text ? JSON.parse(text) : {}
+  } catch {
+    /* ignore */
+  }
+  if (!res.ok) {
+    const msg =
+      typeof json.error === 'string' && json.error
+        ? json.error
+        : `HTTP ${res.status}`
+    throw new Error(msg)
+  }
+  return json
+}
+
+export async function patchQuoteStatus(
+  baseUrl,
+  token,
+  id,
+  status,
+  options = {}
+) {
+  const { signal } = options
+  if (!QUOTE_UUID_RE.test(id)) throw new Error('Invalid id')
+  const url = `${baseUrl}/api/v1/quotes/${encodeURIComponent(id)}`
+  const headers = {
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+  }
+  if (token) headers.Authorization = `Bearer ${token}`
+  const res = await fetch(url, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify({ status }),
+    signal,
+  })
+  const text = await res.text()
+  let json = {}
+  try {
+    json = text ? JSON.parse(text) : {}
+  } catch {
+    /* ignore */
+  }
+  if (!res.ok) {
+    const msg =
+      typeof json.error === 'string' && json.error
+        ? json.error
+        : `HTTP ${res.status}`
+    throw new Error(msg)
+  }
+  return json
+}
+
+export async function postLead(baseUrl, body, options = {}) {
+  const { signal } = options
+  const url = `${baseUrl}/api/v1/leads`
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+    signal,
+  })
+  const text = await res.text()
+  let json = {}
+  try {
+    json = text ? JSON.parse(text) : {}
+  } catch {
+    /* ignore */
+  }
+  if (!res.ok) {
+    const msg =
+      typeof json.error === 'string' && json.error
+        ? json.error
+        : `HTTP ${res.status}`
+    throw new Error(msg)
+  }
+  return json
+}

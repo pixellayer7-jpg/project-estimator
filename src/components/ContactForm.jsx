@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { CONTACT_HANDOFF_KEY } from '../utils/contactHandoff'
 import { LANDING_URL } from '../config/site'
+import { normalizeQuoteApiBase, postLead } from '../utils/quoteApi'
 
 const STRINGS_EN = {
   title: 'Send a message',
@@ -35,6 +36,8 @@ const STRINGS_ZH = {
 
 export default function ContactForm({ lang }) {
   const formId = import.meta.env.VITE_FORMSPREE_FORM_ID
+  const leadApiBase = normalizeQuoteApiBase(import.meta.env.VITE_LEAD_API_URL)
+  const canSubmit = Boolean(formId || leadApiBase)
   const t = lang === 'en' ? STRINGS_EN : STRINGS_ZH
   const en = lang === 'en'
   const [name, setName] = useState('')
@@ -69,7 +72,7 @@ export default function ContactForm({ lang }) {
     }
   }
 
-  if (!formId) return null
+  if (!canSubmit) return null
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -91,21 +94,41 @@ export default function ContactForm({ lang }) {
       ? `${subjectBase} [${quoteRef.slice(0, 8)}]`
       : subjectBase
     try {
-      const res = await fetch(`https://formspree.io/f/${formId}`, {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name,
-          email,
-          message,
-          _subject: subject,
-        }),
-      })
-      await res.json().catch(() => ({}))
-      if (res.ok) {
+      let ok = false
+      if (formId) {
+        const res = await fetch(`https://formspree.io/f/${formId}`, {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name,
+            email,
+            message,
+            _subject: subject,
+          }),
+        })
+        await res.json().catch(() => ({}))
+        ok = res.ok
+      }
+      if (leadApiBase) {
+        try {
+          await postLead(leadApiBase, {
+            name,
+            email,
+            message,
+            subject,
+            quoteRef: quoteRef || null,
+            source: 'calculator',
+            lang,
+          })
+          ok = true
+        } catch {
+          if (!formId) ok = false
+        }
+      }
+      if (ok) {
         setStatus('ok')
         setName('')
         setEmail('')

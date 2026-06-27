@@ -5,10 +5,21 @@ import EcosystemStrip from './components/EcosystemStrip'
 import { GITHUB_PROFILE, LANDING_URL, EMAIL } from './config/site'
 
 const ContactForm = lazy(() => import('./components/ContactForm'))
+const QuoteAdmin = lazy(() => import('./components/QuoteAdmin'))
 
 const LANG_KEY = 'pixellayer-estimator-lang'
 
+function detectAdminMode() {
+  try {
+    const params = new URLSearchParams(window.location.search)
+    return params.get('admin') === '1' || window.location.hash === '#admin'
+  } catch {
+    return false
+  }
+}
+
 export default function App() {
+  const [showAdmin] = useState(detectAdminMode)
   const [lang, setLang] = useState(() => {
     try {
       const params = new URLSearchParams(window.location.search)
@@ -101,21 +112,31 @@ export default function App() {
       </header>
       <EcosystemStrip lang={lang} />
       <main id="main-content">
-        <PricingOverview lang={lang} />
-        <Calculator lang={lang} onHydratedLang={handleHydratedLang} />
-        <Suspense
-          fallback={
-            <p
-              className="contact-suspense-fallback"
-              role="status"
-              aria-live="polite"
+        {showAdmin ? (
+          <Suspense fallback={<p role="status">Loading admin…</p>}>
+            <QuoteAdmin lang={lang} />
+          </Suspense>
+        ) : (
+          <>
+            <PricingOverview lang={lang} />
+            <Calculator lang={lang} onHydratedLang={handleHydratedLang} />
+            <Suspense
+              fallback={
+                <p
+                  className="contact-suspense-fallback"
+                  role="status"
+                  aria-live="polite"
+                >
+                  {lang === 'en'
+                    ? 'Loading contact form…'
+                    : '正在加载留言表单…'}
+                </p>
+              }
             >
-              {lang === 'en' ? 'Loading contact form…' : '正在加载留言表单…'}
-            </p>
-          }
-        >
-          <ContactForm lang={lang} />
-        </Suspense>
+              <ContactForm lang={lang} />
+            </Suspense>
+          </>
+        )}
       </main>
       <footer className="footer" role="contentinfo">
         <div className="container">

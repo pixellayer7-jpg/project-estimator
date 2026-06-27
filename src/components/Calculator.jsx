@@ -13,6 +13,7 @@ import {
   clampExtraSectionsString,
   mapQuoteRowToForm,
 } from '../utils/quoteHydrate'
+import { buildSowMarkdown, downloadSowMarkdown } from '../utils/sowGenerator'
 import { LANDING_URL, EMAIL } from '../config/site'
 import {
   buildLandingContactUrl,
@@ -62,6 +63,8 @@ const STRINGS_EN = {
   copyAria: 'Copy estimate summary to clipboard',
   downloadTxt: 'Download .txt',
   downloadAria: 'Download estimate summary as a text file',
+  downloadSow: 'Download SOW draft',
+  downloadSowAria: 'Download statement of work draft as Markdown',
   printPdf: 'Print / Save as PDF',
   printAria:
     'Open print dialog to save or print the estimate (uses your browser)',
@@ -121,6 +124,8 @@ const STRINGS_ZH = {
   copyAria: '将估算摘要复制到剪贴板',
   downloadTxt: '下载 .txt',
   downloadAria: '将估算摘要下载为文本文件',
+  downloadSow: '下载 SOW 草案',
+  downloadSowAria: '下载工作说明书草案（Markdown）',
   printPdf: '打印 / 另存为 PDF',
   printAria: '打开打印对话框，可将估算另存为 PDF 或打印（由浏览器完成）',
   refLabel: '报价编号',
@@ -398,6 +403,19 @@ export default function Calculator({ lang = 'en', onHydratedLang }) {
     URL.revokeObjectURL(url)
   }
 
+  function handleDownloadSow() {
+    const md = buildSowMarkdown({
+      lang,
+      projectTypeId: projectType,
+      addOnIds,
+      extraSections,
+      min,
+      max,
+      quoteRef,
+    })
+    downloadSowMarkdown(md)
+  }
+
   async function handleCopySummary() {
     try {
       await navigator.clipboard.writeText(summary)
@@ -659,6 +677,14 @@ export default function Calculator({ lang = 'en', onHydratedLang }) {
               aria-label={t.downloadAria}
             >
               {t.downloadTxt}
+            </button>
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={handleDownloadSow}
+              aria-label={t.downloadSowAria}
+            >
+              {t.downloadSow}
             </button>
             <button
               type="button"
