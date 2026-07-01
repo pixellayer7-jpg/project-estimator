@@ -206,3 +206,94 @@ export async function postLead(baseUrl, body, options = {}) {
   }
   return json
 }
+
+export async function listLeadsRecent(
+  baseUrl,
+  token,
+  limit = 50,
+  options = {}
+) {
+  const { signal } = options
+  const url = `${baseUrl}/api/v1/leads?limit=${encodeURIComponent(String(limit))}`
+  const headers = { Accept: 'application/json' }
+  if (token) headers.Authorization = `Bearer ${token}`
+  const res = await fetch(url, { method: 'GET', headers, signal })
+  const text = await res.text()
+  let json = {}
+  try {
+    json = text ? JSON.parse(text) : {}
+  } catch {
+    /* ignore */
+  }
+  if (!res.ok) {
+    const msg =
+      typeof json.error === 'string' && json.error
+        ? json.error
+        : `HTTP ${res.status}`
+    throw new Error(msg)
+  }
+  return json
+}
+
+export async function patchLeadStatus(
+  baseUrl,
+  token,
+  id,
+  status,
+  options = {}
+) {
+  const { signal } = options
+  if (!QUOTE_UUID_RE.test(id)) throw new Error('Invalid id')
+  const url = `${baseUrl}/api/v1/leads/${encodeURIComponent(id)}`
+  const headers = {
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+  }
+  if (token) headers.Authorization = `Bearer ${token}`
+  const res = await fetch(url, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify({ status }),
+    signal,
+  })
+  const text = await res.text()
+  let json = {}
+  try {
+    json = text ? JSON.parse(text) : {}
+  } catch {
+    /* ignore */
+  }
+  if (!res.ok) {
+    const msg =
+      typeof json.error === 'string' && json.error
+        ? json.error
+        : `HTTP ${res.status}`
+    throw new Error(msg)
+  }
+  return json
+}
+
+export async function getStats(baseUrl, options = {}) {
+  const { signal } = options
+  const url = `${baseUrl}/api/v1/stats`
+  const res = await fetch(url, {
+    method: 'GET',
+    headers: { Accept: 'application/json' },
+    signal,
+  })
+  const text = await res.text()
+  let json = {}
+  try {
+    json = text ? JSON.parse(text) : {}
+  } catch {
+    /* ignore */
+  }
+  if (!res.ok) {
+    const msg =
+      typeof json.error === 'string' && json.error
+        ? json.error
+        : `HTTP ${res.status}`
+    throw new Error(msg)
+  }
+  return json
+}

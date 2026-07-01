@@ -5,7 +5,7 @@ import EcosystemStrip from './components/EcosystemStrip'
 import { GITHUB_PROFILE, LANDING_URL, EMAIL } from './config/site'
 
 const ContactForm = lazy(() => import('./components/ContactForm'))
-const QuoteAdmin = lazy(() => import('./components/QuoteAdmin'))
+const CrmAdmin = lazy(() => import('./components/CrmAdmin'))
 
 const LANG_KEY = 'pixellayer-estimator-lang'
 
@@ -114,7 +114,7 @@ export default function App() {
       <main id="main-content">
         {showAdmin ? (
           <Suspense fallback={<p role="status">Loading admin…</p>}>
-            <QuoteAdmin lang={lang} />
+            <CrmAdmin lang={lang} />
           </Suspense>
         ) : (
           <>

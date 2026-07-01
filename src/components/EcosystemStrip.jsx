@@ -35,6 +35,12 @@ export default function EcosystemStrip({ lang }) {
         <a href={apiRepo} target="_blank" rel="noopener noreferrer">
           {en ? 'Quote API' : '报价 API'}
         </a>
+        <span className="ecosystem-sep" aria-hidden="true">
+          ·
+        </span>
+        <a href={`${ESTIMATOR_URL.replace(/\/?$/, '/')}?admin=1`}>
+          {en ? 'CRM admin' : 'CRM 管理'}
+        </a>
       </div>
     </aside>
   )

@@ -787,17 +787,20 @@ input:focus-visible {
   }
 }
 
-/* Quote admin (?admin=1 or #admin) */
+/* Quote / CRM admin (?admin=1 or #admin) */
+.crm-admin,
 .quote-admin {
   padding: 2rem 0 3rem;
 }
 
+.crm-admin-token-form label,
 .quote-admin-token-form label {
   display: block;
   font-weight: 600;
   margin-bottom: 0.5rem;
 }
 
+.crm-admin-token-row,
 .quote-admin-token-row {
   display: flex;
   flex-wrap: wrap;
@@ -805,6 +808,7 @@ input:focus-visible {
   margin-bottom: 1rem;
 }
 
+.crm-admin-token-row input,
 .quote-admin-token-row input {
   flex: 1;
   min-width: 200px;
@@ -815,21 +819,89 @@ input:focus-visible {
   color: var(--text);
 }
 
+.crm-admin-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.crm-admin-tab {
+  padding: 0.45rem 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.crm-admin-tab--active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg);
+  font-weight: 600;
+}
+
+.crm-admin-export {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.crm-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.crm-stat-card {
+  padding: 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-card);
+}
+
+.crm-stat-label {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+}
+
+.crm-stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.crm-stat-breakdown {
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.crm-admin-error,
 .quote-admin-error {
   color: #f87171;
   margin-bottom: 1rem;
 }
 
+.crm-admin-table-wrap,
 .quote-admin-table-wrap {
   overflow-x: auto;
 }
 
+.crm-admin-table,
 .quote-admin-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.9rem;
 }
 
+.crm-admin-table th,
+.crm-admin-table td,
 .quote-admin-table th,
 .quote-admin-table td {
   padding: 0.65rem 0.75rem;
@@ -837,12 +909,14 @@ input:focus-visible {
   text-align: left;
 }
 
+.crm-admin-id,
 .quote-admin-id {
   display: block;
   font-size: 0.75rem;
   color: var(--text-muted);
 }
 
+.crm-admin-table select,
 .quote-admin-table select {
   padding: 0.35rem 0.5rem;
   border-radius: 6px;
