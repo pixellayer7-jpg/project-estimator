@@ -6,7 +6,9 @@ import {
   normalizeQuoteApiBase,
   patchLeadStatus,
   patchQuoteStatus,
+  buildCalculatorLoadUrl,
 } from '../utils/quoteApi'
+import { ESTIMATOR_URL } from '../config/site'
 import { indexLeadsByQuoteRef, leadCountForQuote } from '../utils/crmJoin'
 import { downloadCsv, downloadJson } from '../utils/exportCrm'
 
@@ -59,6 +61,7 @@ export default function CrmAdmin({ lang }) {
         linked: 'Leads',
         totalQuotes: 'Total quotes',
         totalLeads: 'Total leads',
+        openCalc: 'Open',
       }
     : {
         title: 'CRM 管理',
@@ -85,6 +88,7 @@ export default function CrmAdmin({ lang }) {
         linked: '线索',
         totalQuotes: '报价总数',
         totalLeads: '线索总数',
+        openCalc: '打开',
       }
 
   const leadsByRef = useMemo(() => indexLeadsByQuoteRef(leads), [leads])
@@ -166,6 +170,8 @@ export default function CrmAdmin({ lang }) {
     error.includes('401') || error.toLowerCase().includes('unauthorized')
       ? t.unauthorized
       : error
+
+  const calcSiteBase = ESTIMATOR_URL
 
   return (
     <section className="crm-admin no-print" aria-labelledby="crm-title">
@@ -282,6 +288,7 @@ export default function CrmAdmin({ lang }) {
                       <th>{t.range}</th>
                       <th>{t.linked}</th>
                       <th>{t.status}</th>
+                      <th>{t.openCalc}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -315,6 +322,15 @@ export default function CrmAdmin({ lang }) {
                               </option>
                             ))}
                           </select>
+                        </td>
+                        <td>
+                          <a
+                            href={buildCalculatorLoadUrl(calcSiteBase, row.id)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {t.openCalc}
+                          </a>
                         </td>
                       </tr>
                     ))}

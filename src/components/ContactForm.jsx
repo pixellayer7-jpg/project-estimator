@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { CONTACT_HANDOFF_KEY } from '../utils/contactHandoff'
+import { CONTACT_HANDOFF_KEY, readLastQuoteId } from '../utils/contactHandoff'
+import { QUOTE_UUID_RE } from '../utils/quoteApi'
 import { LANDING_URL } from '../config/site'
 import { normalizeQuoteApiBase, postLead } from '../utils/quoteApi'
 
@@ -77,15 +78,22 @@ export default function ContactForm({ lang }) {
   async function handleSubmit(e) {
     e.preventDefault()
     setStatus('sending')
-    let quoteRef = ''
-    try {
-      const raw = sessionStorage.getItem(CONTACT_HANDOFF_KEY)
-      if (raw) {
-        const data = JSON.parse(raw)
-        if (typeof data?.quoteRef === 'string') quoteRef = data.quoteRef
+    let quoteRef = readLastQuoteId()
+    if (!quoteRef || !QUOTE_UUID_RE.test(quoteRef)) {
+      try {
+        const raw = sessionStorage.getItem(CONTACT_HANDOFF_KEY)
+        if (raw) {
+          const data = JSON.parse(raw)
+          if (
+            typeof data?.quoteRef === 'string' &&
+            QUOTE_UUID_RE.test(data.quoteRef)
+          ) {
+            quoteRef = data.quoteRef
+          }
+        }
+      } catch {
+        /* ignore */
       }
-    } catch {
-      /* ignore */
     }
     const subjectBase = en
       ? 'Message from project quote calculator'
@@ -119,7 +127,8 @@ export default function ContactForm({ lang }) {
             email,
             message,
             subject,
-            quoteRef: quoteRef || null,
+            quoteRef:
+              quoteRef && QUOTE_UUID_RE.test(quoteRef) ? quoteRef : null,
             source: 'calculator',
             lang,
           })

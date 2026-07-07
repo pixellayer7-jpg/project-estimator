@@ -11,13 +11,14 @@ describe('contactHandoff', () => {
     sessionStorage.clear()
   })
 
-  it('buildLandingContactUrl sets lang, utm, and contact hash', () => {
+  it('buildLandingContactUrl sets lang, utm, quote id, and contact hash', () => {
     const url = buildLandingContactUrl(
       'https://pixellayer7-jpg.github.io/1',
-      'zh'
+      'zh',
+      'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee'
     )
     expect(url).toContain('lang=zh')
-    expect(url).toContain('utm_source=project-estimator')
+    expect(url).toContain('quote=aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee')
     expect(url).toContain('#contact')
   })
 

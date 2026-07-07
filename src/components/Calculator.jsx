@@ -19,6 +19,7 @@ import {
   buildLandingContactUrl,
   isHandoffOriginCompatible,
   saveContactHandoff,
+  saveLastQuoteId,
 } from '../utils/contactHandoff'
 import {
   parseCalculatorUrlParams,
@@ -99,6 +100,11 @@ const STRINGS_EN = {
   loadManualPlaceholder: 'Paste UUID or ?load= link',
   loadManualAction: 'Load estimate',
   loadManualInvalid: 'Enter a valid saved quote UUID or link.',
+  ctaSiteApi: 'Save & contact on main site',
+  ctaSiteApiSub:
+    'Saves this estimate online, then opens the contact form with ?quote= (works across domains).',
+  ctaSiteApiSaving: 'Saving…',
+  saveContactLink: 'Open contact form with this estimate',
 }
 
 const STRINGS_ZH = {
@@ -157,6 +163,10 @@ const STRINGS_ZH = {
   loadManualPlaceholder: '粘贴 UUID 或 ?load= 链接',
   loadManualAction: '载入估算',
   loadManualInvalid: '请输入有效的已保存报价 UUID 或链接。',
+  ctaSiteApi: '保存并前往主站联系',
+  ctaSiteApiSub: '先保存线上快照，再打开主站联系表单（带 ?quote=，跨域可用）。',
+  ctaSiteApiSaving: '保存中…',
+  saveContactLink: '用此估算打开联系表单',
 }
 
 const defaultForm = {
@@ -184,6 +194,8 @@ export default function Calculator({ lang = 'en', onHydratedLang }) {
   const [saveState, setSaveState] = useState('idle')
   const [saveUrl, setSaveUrl] = useState(null)
   const [saveSiteUrl, setSaveSiteUrl] = useState(null)
+  const [saveContactUrl, setSaveContactUrl] = useState(null)
+  const [saveContactState, setSaveContactState] = useState('idle')
   const [saveErr, setSaveErr] = useState('')
   const [saveLinkCopyState, setSaveLinkCopyState] = useState('idle')
   const [saveSiteLinkCopyState, setSaveSiteLinkCopyState] = useState('idle')
@@ -231,6 +243,7 @@ export default function Calculator({ lang = 'en', onHydratedLang }) {
     setSaveState('idle')
     setSaveUrl(null)
     setSaveSiteUrl(null)
+    setSaveContactUrl(null)
     setSaveErr('')
     setSaveLinkCopyState('idle')
     setSaveSiteLinkCopyState('idle')
@@ -466,6 +479,11 @@ export default function Calculator({ lang = 'en', onHydratedLang }) {
       const viewUrl = `${quoteApiBase}/api/v1/quotes/${data.id}`
       setSaveState('ok')
       setSaveUrl(viewUrl)
+      saveLastQuoteId(data.id)
+      setSaveContactUrl(
+        data.links?.contact ||
+          buildLandingContactUrl(LANDING_URL, lang, data.id)
+      )
       setSaveSiteUrl(
         siteUrlBase ? buildCalculatorLoadUrl(siteUrlBase, data.id) : null
       )
@@ -524,6 +542,34 @@ export default function Calculator({ lang = 'en', onHydratedLang }) {
       extraSections,
     })
     window.location.href = buildLandingContactUrl(LANDING_URL, lang)
+  }
+
+  async function handleSaveAndContact() {
+    if (!quoteApiBase) return
+    setSaveContactState('loading')
+    try {
+      const data = await postQuoteSnapshot(
+        quoteApiBase,
+        {
+          projectType,
+          addOnIds: [...addOnIds],
+          extraSections,
+          min,
+          max,
+          lang,
+          quoteRef,
+          summary,
+        },
+        {}
+      )
+      saveLastQuoteId(data.id)
+      window.location.href =
+        data.links?.contact ||
+        buildLandingContactUrl(LANDING_URL, lang, data.id)
+    } catch {
+      setSaveContactState('err')
+      setTimeout(() => setSaveContactState('idle'), 3000)
+    }
   }
 
   const handoffOk = isHandoffOriginCompatible(LANDING_URL)
@@ -726,16 +772,31 @@ export default function Calculator({ lang = 'en', onHydratedLang }) {
               >
                 {t.ctaSite}
               </button>
-            ) : (
+            ) : quoteApiBase ? null : (
               <p className="calc-handoff-warn" role="alert">
                 {t.ctaSiteCrossOrigin}
               </p>
             )}
+            {quoteApiBase ? (
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleSaveAndContact}
+                disabled={saveContactState === 'loading'}
+              >
+                {saveContactState === 'loading'
+                  ? t.ctaSiteApiSaving
+                  : t.ctaSiteApi}
+              </button>
+            ) : null}
             <a href={mailtoHref} className="btn btn-outline">
               {t.cta}
             </a>
           </div>
           {handoffOk ? <p className="calc-cta-sub">{t.ctaSiteSub}</p> : null}
+          {quoteApiBase ? (
+            <p className="calc-cta-sub">{t.ctaSiteApiSub}</p>
+          ) : null}
           <p className="calc-cta-sub calc-cta-sub--muted">{t.ctaSub}</p>
 
           {quoteApiBase ? (
@@ -840,6 +901,20 @@ export default function Calculator({ lang = 'en', onHydratedLang }) {
                           </button>
                         ) : null}
                       </div>
+                    </div>
+                  ) : null}
+                  {saveContactUrl ? (
+                    <div className="calc-api-save-site">
+                      <p className="calc-api-save-label calc-api-save-label--sub">
+                        {t.saveContactLink}
+                      </p>
+                      <a
+                        href={saveContactUrl}
+                        className="btn-ghost calc-api-save-open"
+                        rel="noopener noreferrer"
+                      >
+                        {t.saveContactLink}
+                      </a>
                     </div>
                   ) : null}
                 </div>
