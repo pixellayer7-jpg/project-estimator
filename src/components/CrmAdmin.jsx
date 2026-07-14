@@ -11,15 +11,33 @@ import {
 import { ESTIMATOR_URL } from '../config/site'
 import { indexLeadsByQuoteRef, leadCountForQuote } from '../utils/crmJoin'
 import { downloadCsv, downloadJson } from '../utils/exportCrm'
+import {
+  demoStatsFromState,
+  loadCrmDemoState,
+  patchDemoLeadStatus,
+  patchDemoQuoteStatus,
+  resetCrmDemoState,
+} from '../utils/crmDemoStore'
 
 const TOKEN_KEY = 'pixellayer-admin-token'
 const QUOTE_STATUSES = ['draft', 'sent', 'accepted', 'declined']
 const LEAD_STATUSES = ['new', 'contacted', 'qualified', 'closed']
 const TABS = ['stats', 'quotes', 'leads']
 
+function detectForcedDemo() {
+  try {
+    return new URLSearchParams(window.location.search).get('demo') === '1'
+  } catch {
+    return false
+  }
+}
+
 export default function CrmAdmin({ lang }) {
   const isEn = lang === 'en'
   const apiBase = normalizeQuoteApiBase(import.meta.env.VITE_QUOTE_API_URL)
+  const forcedDemo = detectForcedDemo()
+  const [useDemo, setUseDemo] = useState(() => !apiBase || forcedDemo)
+
   const [token, setToken] = useState(() => {
     try {
       return sessionStorage.getItem(TOKEN_KEY) || ''
@@ -39,10 +57,17 @@ export default function CrmAdmin({ lang }) {
     ? {
         title: 'CRM admin',
         hint: 'Requires estimator-api with LIST_QUOTES_TOKEN. Token stays in this browser session only.',
+        demoHint:
+          'Demo mode — sample pipeline data (no API). Status changes save in this browser. Interview-safe walkthrough.',
+        demoBadge: 'Demo data',
+        useDemo: 'Use demo data',
+        useLive: 'Use live API',
+        resetDemo: 'Reset demo',
         tokenLabel: 'Bearer token',
         save: 'Save token',
         refresh: 'Refresh all',
-        noApi: 'Set VITE_QUOTE_API_URL at build time to enable CRM.',
+        noApi:
+          'No API URL at build time — running demo CRM so the public walkthrough still works.',
         unauthorized: 'Unauthorized — check your token.',
         tabStats: 'Stats',
         tabQuotes: 'Quotes',
@@ -66,10 +91,16 @@ export default function CrmAdmin({ lang }) {
     : {
         title: 'CRM 管理',
         hint: '需部署 estimator-api 并设置 LIST_QUOTES_TOKEN。令牌仅保存在当前浏览器会话。',
+        demoHint:
+          '演示模式 — 示例商机数据（无需 API）。状态变更保存在本浏览器，适合面试走查。',
+        demoBadge: '演示数据',
+        useDemo: '使用演示数据',
+        useLive: '使用线上 API',
+        resetDemo: '重置演示',
         tokenLabel: 'Bearer 令牌',
         save: '保存令牌',
         refresh: '刷新全部',
-        noApi: '构建时需设置 VITE_QUOTE_API_URL 才能使用 CRM。',
+        noApi: '构建时未配置 API 地址 — 已自动启用演示 CRM，公开走查仍可用。',
         unauthorized: '未授权 — 请检查令牌。',
         tabStats: '统计',
         tabQuotes: '报价',
@@ -93,7 +124,18 @@ export default function CrmAdmin({ lang }) {
 
   const leadsByRef = useMemo(() => indexLeadsByQuoteRef(leads), [leads])
 
-  const refreshAll = useCallback(async () => {
+  const applyDemoState = useCallback((state) => {
+    setQuotes(state.quotes)
+    setLeads(state.leads)
+    setStats(demoStatsFromState(state))
+    setError('')
+  }, [])
+
+  const refreshDemo = useCallback(() => {
+    applyDemoState(loadCrmDemoState())
+  }, [applyDemoState])
+
+  const refreshLive = useCallback(async () => {
     if (!apiBase) return
     setLoading(true)
     setError('')
@@ -119,8 +161,12 @@ export default function CrmAdmin({ lang }) {
   }, [apiBase, token])
 
   useEffect(() => {
-    if (apiBase && token) refreshAll()
-  }, [apiBase, token, refreshAll])
+    if (useDemo) {
+      refreshDemo()
+      return
+    }
+    if (apiBase && token) refreshLive()
+  }, [useDemo, apiBase, token, refreshDemo, refreshLive])
 
   function handleSaveToken(e) {
     e.preventDefault()
@@ -133,37 +179,40 @@ export default function CrmAdmin({ lang }) {
     }
   }
 
-  async function handleQuoteStatus(id, status) {
-    if (!apiBase || !token) return
-    try {
-      await patchQuoteStatus(apiBase, token.trim(), id, status)
-      await refreshAll()
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
+  function handleQuoteStatus(id, status) {
+    if (useDemo) {
+      applyDemoState(patchDemoQuoteStatus({ quotes, leads }, id, status))
+      return
     }
+    if (!apiBase || !token) return
+    ;(async () => {
+      try {
+        await patchQuoteStatus(apiBase, token.trim(), id, status)
+        await refreshLive()
+      } catch (e) {
+        setError(e instanceof Error ? e.message : String(e))
+      }
+    })()
   }
 
-  async function handleLeadStatus(id, status) {
-    if (!apiBase || !token) return
-    try {
-      await patchLeadStatus(apiBase, token.trim(), id, status)
-      await refreshAll()
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
+  function handleLeadStatus(id, status) {
+    if (useDemo) {
+      applyDemoState(patchDemoLeadStatus({ quotes, leads }, id, status))
+      return
     }
+    if (!apiBase || !token) return
+    ;(async () => {
+      try {
+        await patchLeadStatus(apiBase, token.trim(), id, status)
+        await refreshLive()
+      } catch (e) {
+        setError(e instanceof Error ? e.message : String(e))
+      }
+    })()
   }
 
-  if (!apiBase) {
-    return (
-      <section className="crm-admin no-print" aria-labelledby="crm-title">
-        <div className="container">
-          <h2 id="crm-title" className="section-title">
-            {t.title}
-          </h2>
-          <p className="section-subtitle">{t.noApi}</p>
-        </div>
-      </section>
-    )
+  function handleResetDemo() {
+    applyDemoState(resetCrmDemoState())
   }
 
   const errMsg =
@@ -178,31 +227,60 @@ export default function CrmAdmin({ lang }) {
       <div className="container">
         <h2 id="crm-title" className="section-title">
           {t.title}
+          {useDemo ? (
+            <span className="crm-demo-badge">{t.demoBadge}</span>
+          ) : null}
         </h2>
-        <p className="section-subtitle">{t.hint}</p>
-        <form className="crm-admin-token-form" onSubmit={handleSaveToken}>
-          <label htmlFor="admin-token">{t.tokenLabel}</label>
-          <div className="crm-admin-token-row">
-            <input
-              id="admin-token"
-              type="password"
-              autoComplete="off"
-              value={token}
-              onChange={(e) => setToken(e.target.value)}
-            />
-            <button type="submit" className="btn btn-outline">
-              {savedToken ? '✓' : t.save}
-            </button>
+        <p className="section-subtitle">
+          {useDemo ? t.demoHint : apiBase ? t.hint : t.noApi}
+        </p>
+
+        <div className="crm-admin-mode-row">
+          {apiBase ? (
             <button
               type="button"
-              className="btn btn-primary"
-              onClick={refreshAll}
-              disabled={loading || !token.trim()}
+              className="btn btn-outline"
+              onClick={() => setUseDemo((v) => !v)}
             >
-              {loading ? '…' : t.refresh}
+              {useDemo ? t.useLive : t.useDemo}
             </button>
-          </div>
-        </form>
+          ) : null}
+          {useDemo ? (
+            <button
+              type="button"
+              className="btn btn-outline"
+              onClick={handleResetDemo}
+            >
+              {t.resetDemo}
+            </button>
+          ) : null}
+        </div>
+
+        {!useDemo && apiBase ? (
+          <form className="crm-admin-token-form" onSubmit={handleSaveToken}>
+            <label htmlFor="admin-token">{t.tokenLabel}</label>
+            <div className="crm-admin-token-row">
+              <input
+                id="admin-token"
+                type="password"
+                autoComplete="off"
+                value={token}
+                onChange={(e) => setToken(e.target.value)}
+              />
+              <button type="submit" className="btn btn-outline">
+                {savedToken ? '✓' : t.save}
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={refreshLive}
+                disabled={loading || !token.trim()}
+              >
+                {loading ? '…' : t.refresh}
+              </button>
+            </div>
+          </form>
+        ) : null}
 
         <div className="crm-admin-tabs" role="tablist">
           {TABS.map((id) => (
@@ -223,7 +301,7 @@ export default function CrmAdmin({ lang }) {
           ))}
         </div>
 
-        {error ? (
+        {error && !useDemo ? (
           <p className="crm-admin-error" role="alert">
             {errMsg}
           </p>
@@ -276,7 +354,7 @@ export default function CrmAdmin({ lang }) {
                 {t.exportCsv}
               </button>
             </div>
-            {quotes.length === 0 && token && !loading ? (
+            {quotes.length === 0 && !loading ? (
               <p>{t.emptyQuotes}</p>
             ) : (
               <div className="crm-admin-table-wrap">
@@ -361,7 +439,7 @@ export default function CrmAdmin({ lang }) {
                 {t.exportCsv}
               </button>
             </div>
-            {leads.length === 0 && token && !loading ? (
+            {leads.length === 0 && !loading ? (
               <p>{t.emptyLeads}</p>
             ) : (
               <div className="crm-admin-table-wrap">

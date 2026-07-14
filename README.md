@@ -27,6 +27,9 @@ Static **`<head>`** tweaks: `referrer` policy for outbound privacy, and **precon
 - **Persistence** — Project type, add-ons, and extra sections are saved in `localStorage` (debounced while typing) until reset.
 - **Timeline hints** — Typical delivery window per project type (editable in `pricing.js`).
 - **Download** — Export the same summary as `pixellayer-quote-summary.txt`.
+- **SOW draft** — Download Markdown SOW, or **Print proposal (SOW)** for a client-ready HTML page (browser Save as PDF).
+- **Deposit invoice** — Draft invoice (50% of midpoint fee) from the same quote state — print / PDF, no Stripe required.
+- **CRM admin (demo)** — [`?admin=1`](https://pixellayer7-jpg.github.io/project-estimator/?admin=1) works **without** API secrets via seeded demo data (`localStorage`); live API mode when `VITE_QUOTE_API_URL` is set. Force demo with `?admin=1&demo=1`.
 - **Print** — Print-friendly styles for the estimate card; interactive chrome hidden when printing.
 - **Validation** — Extra sections are clamped to 0–20 in logic, on blur in the UI, and in quote/summary math.
 - **Header** — Link to this repository on GitHub.

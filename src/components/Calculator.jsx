@@ -13,7 +13,12 @@ import {
   clampExtraSectionsString,
   mapQuoteRowToForm,
 } from '../utils/quoteHydrate'
-import { buildSowMarkdown, downloadSowMarkdown } from '../utils/sowGenerator'
+import {
+  buildSowMarkdown,
+  downloadSowMarkdown,
+  openSowPrintWindow,
+} from '../utils/sowGenerator'
+import { openDepositInvoiceWindow } from '../utils/invoiceGenerator'
 import { LANDING_URL, EMAIL } from '../config/site'
 import {
   buildLandingContactUrl,
@@ -66,6 +71,10 @@ const STRINGS_EN = {
   downloadAria: 'Download estimate summary as a text file',
   downloadSow: 'Download SOW draft',
   downloadSowAria: 'Download statement of work draft as Markdown',
+  printSow: 'Print proposal (SOW)',
+  printSowAria: 'Open print-ready proposal HTML (Save as PDF from browser)',
+  printInvoice: 'Deposit invoice',
+  printInvoiceAria: 'Open deposit invoice draft for print / Save as PDF',
   printPdf: 'Print / Save as PDF',
   printAria:
     'Open print dialog to save or print the estimate (uses your browser)',
@@ -132,6 +141,10 @@ const STRINGS_ZH = {
   downloadAria: '将估算摘要下载为文本文件',
   downloadSow: '下载 SOW 草案',
   downloadSowAria: '下载工作说明书草案（Markdown）',
+  printSow: '打印提案（SOW）',
+  printSowAria: '打开可打印的提案 HTML（浏览器另存为 PDF）',
+  printInvoice: '定金发票',
+  printInvoiceAria: '打开定金发票草案以便打印 / 另存为 PDF',
   printPdf: '打印 / 另存为 PDF',
   printAria: '打开打印对话框，可将估算另存为 PDF 或打印（由浏览器完成）',
   refLabel: '报价编号',
@@ -427,6 +440,34 @@ export default function Calculator({ lang = 'en', onHydratedLang }) {
       quoteRef,
     })
     downloadSowMarkdown(md)
+  }
+
+  function handlePrintSow() {
+    openSowPrintWindow({
+      lang,
+      projectTypeId: projectType,
+      addOnIds,
+      extraSections,
+      min,
+      max,
+      quoteRef,
+    })
+  }
+
+  function handlePrintInvoice() {
+    const type = projectTypes.find((p) => p.id === projectType)
+    const projectTypeLabel = type
+      ? isEn(lang)
+        ? type.labelEn
+        : type.labelZh
+      : projectType
+    openDepositInvoiceWindow({
+      lang,
+      projectTypeLabel,
+      min,
+      max,
+      quoteRef,
+    })
   }
 
   async function handleCopySummary() {
@@ -731,6 +772,22 @@ export default function Calculator({ lang = 'en', onHydratedLang }) {
               aria-label={t.downloadSowAria}
             >
               {t.downloadSow}
+            </button>
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={handlePrintSow}
+              aria-label={t.printSowAria}
+            >
+              {t.printSow}
+            </button>
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={handlePrintInvoice}
+              aria-label={t.printInvoiceAria}
+            >
+              {t.printInvoice}
             </button>
             <button
               type="button"
