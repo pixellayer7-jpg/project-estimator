@@ -63,6 +63,7 @@ export default function CrmAdmin({ lang }) {
         useDemo: 'Use demo data',
         useLive: 'Use live API',
         resetDemo: 'Reset demo',
+        openPortal: 'Open client portal demo',
         tokenLabel: 'Bearer token',
         save: 'Save token',
         refresh: 'Refresh all',
@@ -97,6 +98,7 @@ export default function CrmAdmin({ lang }) {
         useDemo: '使用演示数据',
         useLive: '使用线上 API',
         resetDemo: '重置演示',
+        openPortal: '打开客户状态页演示',
         tokenLabel: 'Bearer 令牌',
         save: '保存令牌',
         refresh: '刷新全部',
@@ -254,6 +256,12 @@ export default function CrmAdmin({ lang }) {
               {t.resetDemo}
             </button>
           ) : null}
+          <a
+            className="btn btn-outline"
+            href={`${ESTIMATOR_URL.replace(/\/?$/, '/')}?portal=demo`}
+          >
+            {t.openPortal}
+          </a>
         </div>
 
         {!useDemo && apiBase ? (

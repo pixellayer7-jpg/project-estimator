@@ -6,6 +6,7 @@ import { GITHUB_PROFILE, LANDING_URL, EMAIL } from './config/site'
 
 const ContactForm = lazy(() => import('./components/ContactForm'))
 const CrmAdmin = lazy(() => import('./components/CrmAdmin'))
+const ClientPortal = lazy(() => import('./components/ClientPortal'))
 
 const LANG_KEY = 'pixellayer-estimator-lang'
 
@@ -18,8 +19,17 @@ function detectAdminMode() {
   }
 }
 
+function detectPortalMode() {
+  try {
+    return new URLSearchParams(window.location.search).get('portal') === 'demo'
+  } catch {
+    return false
+  }
+}
+
 export default function App() {
   const [showAdmin] = useState(detectAdminMode)
+  const [showPortal] = useState(detectPortalMode)
   const [lang, setLang] = useState(() => {
     try {
       const params = new URLSearchParams(window.location.search)
@@ -40,11 +50,14 @@ export default function App() {
       /* ignore */
     }
     document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en'
-    document.title =
-      lang === 'zh'
+    document.title = showPortal
+      ? lang === 'zh'
+        ? '客户项目状态（演示）— PixelLayer L.L.C'
+        : 'Client Project Status (Demo) — PixelLayer L.L.C'
+      : lang === 'zh'
         ? '项目报价计算器 — PixelLayer L.L.C'
         : 'Project Quote Calculator — PixelLayer L.L.C'
-  }, [lang])
+  }, [lang, showPortal])
 
   const handleHydratedLang = useCallback((next) => {
     if (next === 'en' || next === 'zh') setLang(next)
@@ -53,11 +66,19 @@ export default function App() {
   return (
     <>
       <a href="#main-content" className="skip-link">
-        {lang === 'en' ? 'Skip to calculator' : '跳到计算器'}
+        {showPortal
+          ? lang === 'en'
+            ? 'Skip to project status'
+            : '跳到项目状态'
+          : lang === 'en'
+            ? 'Skip to calculator'
+            : '跳到计算器'}
       </a>
-      <a href="#contact" className="skip-link skip-link--second">
-        {lang === 'en' ? 'Skip to contact form' : '跳到留言表单'}
-      </a>
+      {!showAdmin && !showPortal ? (
+        <a href="#contact" className="skip-link skip-link--second">
+          {lang === 'en' ? 'Skip to contact form' : '跳到留言表单'}
+        </a>
+      ) : null}
       <header className="header" role="banner">
         <div className="container header-inner">
           <a
@@ -112,7 +133,11 @@ export default function App() {
       </header>
       <EcosystemStrip lang={lang} />
       <main id="main-content">
-        {showAdmin ? (
+        {showPortal ? (
+          <Suspense fallback={<p role="status">Loading client portal…</p>}>
+            <ClientPortal lang={lang} />
+          </Suspense>
+        ) : showAdmin ? (
           <Suspense fallback={<p role="status">Loading admin…</p>}>
             <CrmAdmin lang={lang} />
           </Suspense>

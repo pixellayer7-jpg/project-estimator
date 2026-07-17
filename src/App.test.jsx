@@ -44,6 +44,21 @@ describe('App', () => {
     ).toHaveAttribute('href', 'https://pixellayer7-jpg.github.io/1/')
   })
 
+  it('routes ?portal=demo to the client status portal', async () => {
+    window.history.replaceState({}, '', '/?portal=demo')
+    render(<App />)
+    expect(
+      await screen.findByRole('heading', {
+        level: 1,
+        name: 'Bilingual product launch site',
+      })
+    ).toBeInTheDocument()
+    expect(document.title).toMatch(/Client Project Status/)
+    expect(
+      screen.queryByRole('heading', { name: /Get an estimated quote/i })
+    ).not.toBeInTheDocument()
+  })
+
   it('syncs UI language from hydrated quote ?load= snapshot', async () => {
     vi.stubEnv('VITE_QUOTE_API_URL', 'https://api.example.com')
     const loadId = 'aaaaaaaa-bbbb-4ccc-8aaa-eeeeeeeeeeee'
