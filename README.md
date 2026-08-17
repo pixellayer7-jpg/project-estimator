@@ -30,7 +30,8 @@ Static **`<head>`** tweaks: `referrer` policy for outbound privacy, and **precon
 - **SOW draft** — Download Markdown SOW, or **Print proposal (SOW)** for a client-ready HTML page (browser Save as PDF).
 - **Deposit invoice** — Draft invoice (50% of midpoint fee) from the same quote state — print / PDF, no Stripe required.
 - **CRM admin (demo)** — [`?admin=1`](https://pixellayer7-jpg.github.io/project-estimator/?admin=1) works **without** API secrets via seeded demo data (`localStorage`); live API mode when `VITE_QUOTE_API_URL` is set. Force demo with `?admin=1&demo=1`.
-- **Client status portal (demo)** — [`?portal=demo`](https://pixellayer7-jpg.github.io/project-estimator/?portal=demo) presents scope, progress, milestones, deliverables, updates, and the next owner/action. Representative data only; no login or real client data.
+- **Shareable proposal** — **Open proposal** on the calculator opens [`?proposal=sow`](https://pixellayer7-jpg.github.io/project-estimator/?proposal=sow) with the **same price, scope, and quote ID**. Clients review the SOW / deposit invoice in-app, print/PDF, then **Accept this scope** into the matching portal. Optional **client name** appears on the proposal, invoice, and portal.
+- **Client status portal** — [`?portal=demo`](https://pixellayer7-jpg.github.io/project-estimator/?portal=demo) is a static sample. **Preview client portal** on the calculator opens [`?portal=quote`](https://pixellayer7-jpg.github.io/project-estimator/?portal=quote) with the **same price, scope, and quote ID**. Clients can **Accept this scope** (saved in this browser). Portal artifacts open the in-app proposal. No login or API secrets.
 - **Print** — Print-friendly styles for the estimate card; interactive chrome hidden when printing.
 - **Validation** — Extra sections are clamped to 0–20 in logic, on blur in the UI, and in quote/summary math.
 - **Header** — Link to this repository on GitHub.

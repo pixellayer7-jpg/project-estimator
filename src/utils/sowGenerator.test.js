@@ -16,6 +16,21 @@ describe('buildSowMarkdown', () => {
     expect(md).toContain('$920 – $1,380 USD')
     expect(md).toContain('aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee')
     expect(md).toContain('Multilingual')
+    expect(md).toContain('CLIENT_LEGAL_NAME')
+  })
+
+  it('uses the provided client name', () => {
+    const md = buildSowMarkdown({
+      lang: 'en',
+      projectTypeId: 'landing',
+      addOnIds: [],
+      extraSections: '0',
+      min: 800,
+      max: 1200,
+      clientName: 'Acme Studio',
+    })
+    expect(md).toContain('Acme Studio')
+    expect(md).not.toContain('CLIENT_LEGAL_NAME')
   })
 
   it('includes Chinese headings when lang is zh', () => {

@@ -83,6 +83,7 @@ export const portalDemo = {
         zh: '响应式双语营销体验',
       },
       href: LANDING_URL,
+      external: true,
     },
     {
       id: 'quote',
@@ -94,6 +95,7 @@ export const portalDemo = {
         zh: '范围与价格交接演示',
       },
       href: ESTIMATOR_URL,
+      external: true,
     },
     {
       id: 'source',
@@ -105,6 +107,7 @@ export const portalDemo = {
         zh: '版本历史、测试与部署流程',
       },
       href: `${GITHUB_PROFILE}/1`,
+      external: true,
     },
   ],
   updates: [

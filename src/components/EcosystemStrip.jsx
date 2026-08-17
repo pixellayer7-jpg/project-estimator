@@ -47,6 +47,12 @@ export default function EcosystemStrip({ lang }) {
         <a href={`${ESTIMATOR_URL.replace(/\/?$/, '/')}?portal=demo`}>
           {en ? 'Client portal' : '客户状态页'}
         </a>
+        <span className="ecosystem-sep" aria-hidden="true">
+          ·
+        </span>
+        <a href={`${ESTIMATOR_URL.replace(/\/?$/, '/')}?proposal=sow`}>
+          {en ? 'Proposal' : '提案'}
+        </a>
       </div>
     </aside>
   )

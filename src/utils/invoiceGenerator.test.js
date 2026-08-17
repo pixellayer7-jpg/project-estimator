@@ -23,6 +23,19 @@ describe('invoiceGenerator', () => {
     expect(html).toContain('INV-')
     expect(html).toContain('$1,150 USD')
     expect(html).toContain('window.print()')
+    expect(html).toContain('CLIENT_LEGAL_NAME')
+  })
+
+  it('escapes client name in invoice HTML', () => {
+    const html = buildDepositInvoiceHtml({
+      lang: 'en',
+      projectTypeLabel: 'Landing Page',
+      min: 920,
+      max: 1380,
+      clientName: '<script>x</script>',
+    })
+    expect(html).toContain('&lt;script&gt;x&lt;/script&gt;')
+    expect(html).not.toContain('<script>x</script>')
   })
 
   it('invoice number is stable prefix form', () => {

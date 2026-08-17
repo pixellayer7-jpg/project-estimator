@@ -18,4 +18,9 @@ describe('parseCalculatorUrlParams', () => {
     const r = parseCalculatorUrlParams('?addons=design,bad,rush')
     expect(r.addOnIds).toEqual(['design', 'rush'])
   })
+
+  it('parses extra sections', () => {
+    expect(parseCalculatorUrlParams('?extra=3').extraSections).toBe('3')
+    expect(parseCalculatorUrlParams('?extra=99').extraSections).toBe('20')
+  })
 })

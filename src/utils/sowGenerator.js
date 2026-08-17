@@ -4,6 +4,22 @@ import { projectTypes, addOns } from '../data/pricing'
  * Build a draft Statement of Work (Markdown) from calculator state.
  * Client placeholders remain in ALL CAPS for manual completion.
  */
+function clientDisplayName(clientName, en) {
+  const name = String(clientName ?? '')
+    .trim()
+    .slice(0, 80)
+  if (name) return name
+  return en ? 'CLIENT_LEGAL_NAME' : 'CLIENT_LEGAL_NAME'
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
 export function buildSowMarkdown({
   lang,
   projectTypeId,
@@ -12,6 +28,7 @@ export function buildSowMarkdown({
   min,
   max,
   quoteRef = null,
+  clientName = '',
 }) {
   const en = lang === 'en'
   const type = projectTypes.find((p) => p.id === projectTypeId)
@@ -39,7 +56,7 @@ export function buildSowMarkdown({
 ## 1. Parties
 
 - **Provider:** PixelLayer L.L.C (He Zhang) — pixellayer7@gmail.com
-- **Client:** **CLIENT_LEGAL_NAME** — **CLIENT_CONTACT**
+- **Client:** **${clientDisplayName(clientName, true)}** — **CLIENT_CONTACT**
 
 ## 2. Project summary
 
@@ -107,7 +124,7 @@ _This draft is generated from the PixelLayer quote calculator. Not legal advice 
 ## 1. 双方
 
 - **服务方：** PixelLayer L.L.C（He Zhang）— pixellayer7@gmail.com
-- **客户：** **CLIENT_LEGAL_NAME** — **CLIENT_CONTACT**
+- **客户：** **${clientDisplayName(clientName, false)}** — **CLIENT_CONTACT**
 
 ## 2. 项目概述
 
@@ -191,6 +208,7 @@ function resolveSowLabels({
   min,
   max,
   quoteRef = null,
+  clientName = '',
 }) {
   const en = lang === 'en'
   const type = projectTypes.find((p) => p.id === projectTypeId)
@@ -205,7 +223,8 @@ function resolveSowLabels({
   const ref =
     quoteRef ||
     (en ? 'QUOTE_REF (fill before send)' : 'QUOTE_REF（发送前填写）')
-  return { en, typeLabel, addOnLabels, sections, range, ref }
+  const client = clientDisplayName(clientName, en)
+  return { en, typeLabel, addOnLabels, sections, range, ref, client }
 }
 
 const PRINT_DOC_CSS = `
@@ -260,7 +279,7 @@ const PRINT_DOC_CSS = `
  * Client-facing HTML proposal (print → Save as PDF).
  */
 export function buildSowHtml(params) {
-  const { en, typeLabel, addOnLabels, sections, range, ref } =
+  const { en, typeLabel, addOnLabels, sections, range, ref, client } =
     resolveSowLabels(params)
   const addOnsText = addOnLabels.length
     ? addOnLabels.join(en ? '; ' : '；')
@@ -288,7 +307,7 @@ export function buildSowHtml(params) {
     <h2>${en ? '1. Parties' : '1. 双方'}</h2>
     <table>
       <tr><th>${en ? 'Provider' : '服务方'}</th><td>PixelLayer L.L.C (He Zhang) — pixellayer7@gmail.com</td></tr>
-      <tr><th>${en ? 'Client' : '客户'}</th><td><strong>CLIENT_LEGAL_NAME</strong> — <strong>CLIENT_CONTACT</strong></td></tr>
+      <tr><th>${en ? 'Client' : '客户'}</th><td><strong>${escapeHtml(client)}</strong> — <strong>CLIENT_CONTACT</strong></td></tr>
     </table>
 
     <h2>${en ? '2. Project summary' : '2. 项目概述'}</h2>

@@ -31,6 +31,16 @@ describe('storage', () => {
     expect(loadEstimatorForm()).toEqual(state)
   })
 
+  it('round-trips optional client name', () => {
+    saveEstimatorForm({
+      projectType: 'landing',
+      addOnIds: [],
+      extraSections: '0',
+      clientName: '  Acme Studio  ',
+    })
+    expect(loadEstimatorForm().clientName).toBe('Acme Studio')
+  })
+
   it('normalizes extra sections on load', () => {
     saveEstimatorForm({
       projectType: 'landing',

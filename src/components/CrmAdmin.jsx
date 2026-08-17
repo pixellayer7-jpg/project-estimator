@@ -11,6 +11,7 @@ import {
 import { ESTIMATOR_URL } from '../config/site'
 import { indexLeadsByQuoteRef, leadCountForQuote } from '../utils/crmJoin'
 import { downloadCsv, downloadJson } from '../utils/exportCrm'
+import { buildPortalQuoteUrl, buildProposalUrl } from '../utils/portalFromQuote'
 import {
   demoStatsFromState,
   loadCrmDemoState,
@@ -88,6 +89,8 @@ export default function CrmAdmin({ lang }) {
         totalQuotes: 'Total quotes',
         totalLeads: 'Total leads',
         openCalc: 'Open',
+        openPortalRow: 'Portal',
+        openProposalRow: 'Proposal',
       }
     : {
         title: 'CRM 管理',
@@ -122,6 +125,8 @@ export default function CrmAdmin({ lang }) {
         totalQuotes: '报价总数',
         totalLeads: '线索总数',
         openCalc: '打开',
+        openPortalRow: '状态页',
+        openProposalRow: '提案',
       }
 
   const leadsByRef = useMemo(() => indexLeadsByQuoteRef(leads), [leads])
@@ -416,6 +421,31 @@ export default function CrmAdmin({ lang }) {
                             rel="noopener noreferrer"
                           >
                             {t.openCalc}
+                          </a>
+                          {' · '}
+                          <a
+                            href={buildPortalQuoteUrl({
+                              base: ESTIMATOR_URL,
+                              projectType: row.projectType,
+                              addOnIds: row.addOnIds || [],
+                              extraSections: row.extraSections ?? '0',
+                              quoteRef: row.id || row.quoteRef,
+                            })}
+                          >
+                            {t.openPortalRow}
+                          </a>
+                          {' · '}
+                          <a
+                            href={buildProposalUrl({
+                              base: ESTIMATOR_URL,
+                              tab: 'sow',
+                              projectType: row.projectType,
+                              addOnIds: row.addOnIds || [],
+                              extraSections: row.extraSections ?? '0',
+                              quoteRef: row.id || row.quoteRef,
+                            })}
+                          >
+                            {t.openProposalRow}
                           </a>
                         </td>
                       </tr>

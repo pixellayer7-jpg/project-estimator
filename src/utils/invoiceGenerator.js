@@ -62,12 +62,28 @@ const INVOICE_CSS = `
 /**
  * @param {{ lang: string, projectTypeLabel: string, min: number, max: number, quoteRef?: string|null }} params
  */
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
+function clientDisplayName(clientName) {
+  const name = String(clientName ?? '')
+    .trim()
+    .slice(0, 80)
+  return name || 'CLIENT_LEGAL_NAME'
+}
+
 export function buildDepositInvoiceHtml({
   lang,
   projectTypeLabel,
   min,
   max,
   quoteRef = null,
+  clientName = '',
 }) {
   const en = lang === 'en'
   const fee = suggestedFee(min, max)
@@ -99,7 +115,7 @@ export function buildDepositInvoiceHtml({
     <p class="meta">${en ? 'Issued' : '开具日期'}: ${issued}</p>
 
     <table>
-      <tr><th>${en ? 'Bill to' : '收款对象'}</th><td><strong>CLIENT_LEGAL_NAME</strong><br/>CLIENT_CONTACT</td></tr>
+      <tr><th>${en ? 'Bill to' : '收款对象'}</th><td><strong>${escapeHtml(clientDisplayName(clientName))}</strong><br/>CLIENT_CONTACT</td></tr>
       <tr><th>${en ? 'Project' : '项目'}</th><td>${projectTypeLabel}</td></tr>
       <tr><th>${en ? 'Quote range' : '报价区间'}</th><td>${range}</td></tr>
       <tr><th>${en ? 'Suggested fixed fee' : '建议固定价'}</th><td>$${fee.toLocaleString()} USD</td></tr>

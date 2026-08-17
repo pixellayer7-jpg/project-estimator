@@ -396,4 +396,34 @@ describe('Calculator', () => {
     expect(href.value).toContain('#contact')
     expect(href.value).toContain('utm_source=project-estimator')
   })
+
+  it('links to a quote-hydrated client portal', () => {
+    render(<Calculator lang="en" />)
+    const link = screen.getByRole('link', {
+      name: /client status page generated from this quote/i,
+    })
+    expect(link).toHaveAttribute(
+      'href',
+      expect.stringContaining('portal=quote')
+    )
+    expect(link).toHaveAttribute(
+      'href',
+      expect.stringContaining('type=landing')
+    )
+  })
+
+  it('links to a shareable in-app proposal', () => {
+    render(<Calculator lang="en" />)
+    const link = screen.getByRole('link', {
+      name: /shareable in-app proposal/i,
+    })
+    expect(link).toHaveAttribute(
+      'href',
+      expect.stringContaining('proposal=sow')
+    )
+    expect(link).toHaveAttribute(
+      'href',
+      expect.stringContaining('type=landing')
+    )
+  })
 })

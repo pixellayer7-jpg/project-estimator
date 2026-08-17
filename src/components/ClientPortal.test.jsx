@@ -1,9 +1,16 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import ClientPortal from './ClientPortal'
 import { calculatePortalProgress, portalDemo } from '../data/clientPortalDemo'
+import { buildPortalFromQuote } from '../utils/portalFromQuote'
+import { PORTAL_ACCEPT_KEY } from '../utils/portalAcceptStore'
 
 describe('ClientPortal', () => {
+  beforeEach(() => {
+    localStorage.removeItem(PORTAL_ACCEPT_KEY)
+  })
+
   it('renders a transparent demo project with progress and milestones', () => {
     render(<ClientPortal lang="en" />)
 
@@ -33,6 +40,35 @@ describe('ClientPortal', () => {
       'href',
       expect.stringMatching(/^mailto:/)
     )
+  })
+
+  it('renders a quote-hydrated project and accepts scope', async () => {
+    const project = buildPortalFromQuote({
+      projectType: 'landing',
+      addOnIds: ['i18n'],
+      extraSections: '1',
+      quoteRef: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',
+      now: new Date('2026-08-17T12:00:00Z'),
+    })
+    const user = userEvent.setup()
+    render(<ClientPortal lang="en" project={project} />)
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'Landing Page' })
+    ).toBeInTheDocument()
+    expect(screen.getByText(/From your quote/i)).toBeInTheDocument()
+    expect(
+      screen.getByRole('progressbar', { name: /overall progress: 20%/i })
+    ).toHaveAttribute('aria-valuenow', '20')
+    await user.click(screen.getByRole('button', { name: /Accept this scope/i }))
+    expect(
+      screen.getByRole('button', { name: /Scope accepted/i })
+    ).toBeDisabled()
+    expect(
+      screen.getByRole('progressbar', { name: /overall progress: 50%/i })
+    ).toHaveAttribute('aria-valuenow', '50')
+    expect(
+      screen.getByRole('link', { name: /Open proposal \(SOW\)/i })
+    ).toHaveAttribute('href', expect.stringContaining('proposal=sow'))
   })
 })
 

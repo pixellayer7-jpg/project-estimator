@@ -1,5 +1,14 @@
+import { useMemo, useState } from 'react'
 import { calculatePortalProgress, portalDemo } from '../data/clientPortalDemo'
 import { EMAIL, ESTIMATOR_URL } from '../config/site'
+import { openSowPrintWindow } from '../utils/sowGenerator'
+import { openDepositInvoiceWindow } from '../utils/invoiceGenerator'
+import {
+  buildPortalQuoteUrl,
+  withQuoteAcceptance,
+} from '../utils/portalFromQuote'
+import { acceptQuote } from '../utils/portalAcceptStore'
+import { projectTypes } from '../data/pricing'
 
 const STATUS_LABELS = {
   complete: { en: 'Complete', zh: '已完成' },
@@ -21,19 +30,42 @@ function formatDate(value, lang) {
   }).format(new Date(`${value}T00:00:00Z`))
 }
 
-export default function ClientPortal({ lang }) {
+function shareUrlFor(project, lang) {
+  if (project?.source !== 'quote' || !project.quotePayload) {
+    return `${ESTIMATOR_URL.replace(/\/?$/, '/')}?portal=demo`
+  }
+  return buildPortalQuoteUrl({
+    base: ESTIMATOR_URL,
+    projectType: project.quotePayload.projectTypeId,
+    addOnIds: project.quotePayload.addOnIds,
+    extraSections: project.quotePayload.extraSections,
+    quoteRef: project.quotePayload.quoteRef,
+    lang,
+    clientName: project.quotePayload.clientName,
+  })
+}
+
+export default function ClientPortal({ lang, project = portalDemo }) {
   const en = lang === 'en'
-  const project = portalDemo
-  const progress = calculatePortalProgress(project.milestones)
-  const portalHome = `${ESTIMATOR_URL.replace(/\/?$/, '/')}?portal=demo`
+  const [accepted, setAccepted] = useState(() => Boolean(project.accepted))
+  const [copyState, setCopyState] = useState('idle')
+
+  const live = useMemo(() => {
+    if (project.source !== 'quote') return project
+    return accepted ? withQuoteAcceptance(project) : project
+  }, [project, accepted])
+
+  const progress = calculatePortalProgress(live.milestones)
+  const shareUrl = shareUrlFor(live, lang)
 
   const t = en
     ? {
-        demo: 'Demo portal',
+        demo: live.source === 'quote' ? 'From your quote' : 'Demo portal',
         eyebrow: 'Client project status',
         progress: 'Overall progress',
         target: 'Target launch',
-        budget: 'Agreed project fee',
+        budget: 'Indicative range',
+        deposit: 'Deposit due',
         scope: 'Scope summary',
         timeline: 'Project milestones',
         artifacts: 'Deliverables & links',
@@ -43,15 +75,24 @@ export default function ClientPortal({ lang }) {
         due: 'Due',
         contact: 'Ask a question',
         back: 'Back to calculator',
+        accept: 'Accept this scope',
+        accepted: 'Scope accepted',
+        print: 'Print status page',
+        copy: 'Copy share link',
+        copied: 'Link copied',
+        copyFail: 'Copy failed',
         notice:
-          'Representative demo data — no real client information is displayed.',
+          live.source === 'quote'
+            ? 'Generated from the public calculator — indicative until SOW is signed. No real client records are stored on a server.'
+            : 'Representative demo data — no real client information is displayed.',
       }
     : {
-        demo: '演示门户',
+        demo: live.source === 'quote' ? '来自你的报价' : '演示门户',
         eyebrow: '客户项目状态',
         progress: '整体进度',
         target: '目标上线',
-        budget: '约定项目费用',
+        budget: '参考区间',
+        deposit: '应付定金',
         scope: '范围摘要',
         timeline: '项目里程碑',
         artifacts: '交付物与链接',
@@ -61,8 +102,65 @@ export default function ClientPortal({ lang }) {
         due: '截止',
         contact: '提出问题',
         back: '返回计算器',
-        notice: '典型演示数据 — 不展示任何真实客户信息。',
+        accept: '接受此范围',
+        accepted: '范围已接受',
+        print: '打印状态页',
+        copy: '复制分享链接',
+        copied: '链接已复制',
+        copyFail: '复制失败',
+        notice:
+          live.source === 'quote'
+            ? '由公开计算器生成 — 签署 SOW 前仅供参考。服务器不存储真实客户记录。'
+            : '典型演示数据 — 不展示任何真实客户信息。',
       }
+
+  function handleArtifact(item) {
+    const payload = live.quotePayload
+    if (item.action === 'sow' && payload) {
+      openSowPrintWindow({
+        lang,
+        projectTypeId: payload.projectTypeId,
+        addOnIds: payload.addOnIds,
+        extraSections: payload.extraSections,
+        min: payload.min,
+        max: payload.max,
+        quoteRef: payload.quoteRef,
+        clientName: payload.clientName,
+      })
+      return
+    }
+    if (item.action === 'invoice' && payload) {
+      const type = projectTypes.find((p) => p.id === payload.projectTypeId)
+      openDepositInvoiceWindow({
+        lang,
+        projectTypeLabel: type
+          ? en
+            ? type.labelEn
+            : type.labelZh
+          : payload.projectTypeId,
+        min: payload.min,
+        max: payload.max,
+        quoteRef: payload.quoteRef,
+        clientName: payload.clientName,
+      })
+    }
+  }
+
+  function handleAccept() {
+    const ref = live.quotePayload?.quoteRef
+    if (ref) acceptQuote(ref)
+    setAccepted(true)
+  }
+
+  async function handleCopyShare() {
+    try {
+      await navigator.clipboard.writeText(shareUrl)
+      setCopyState('ok')
+    } catch {
+      setCopyState('fail')
+    }
+    window.setTimeout(() => setCopyState('idle'), 2000)
+  }
 
   return (
     <section className="client-portal" aria-labelledby="portal-title">
@@ -75,12 +173,12 @@ export default function ClientPortal({ lang }) {
         <header className="portal-hero">
           <div>
             <p className="portal-eyebrow">{t.eyebrow}</p>
-            <h1 id="portal-title">{localize(project.projectName, lang)}</h1>
-            <p className="portal-client">{localize(project.client, lang)}</p>
+            <h1 id="portal-title">{localize(live.projectName, lang)}</h1>
+            <p className="portal-client">{localize(live.client, lang)}</p>
           </div>
           <div className="portal-project-id">
             <span>Project ID</span>
-            <code>{project.projectId}</code>
+            <code>{live.projectId}</code>
           </div>
         </header>
 
@@ -105,17 +203,27 @@ export default function ClientPortal({ lang }) {
           <dl className="portal-summary-grid">
             <div>
               <dt>{t.target}</dt>
-              <dd>{formatDate(project.dateRange.target, lang)}</dd>
+              <dd>{formatDate(live.dateRange.target, lang)}</dd>
             </div>
             <div>
               <dt>{t.budget}</dt>
-              <dd>{project.budget}</dd>
+              <dd>{live.budget}</dd>
             </div>
-            <div className="portal-summary-scope">
-              <dt>{t.scope}</dt>
-              <dd>{localize(project.scope, lang)}</dd>
-            </div>
+            {live.deposit ? (
+              <div>
+                <dt>{t.deposit}</dt>
+                <dd>${Number(live.deposit).toLocaleString()} USD</dd>
+              </div>
+            ) : (
+              <div className="portal-summary-scope">
+                <dt>{t.scope}</dt>
+                <dd>{localize(live.scope, lang)}</dd>
+              </div>
+            )}
           </dl>
+          {live.deposit ? (
+            <p className="portal-scope-inline">{localize(live.scope, lang)}</p>
+          ) : null}
         </section>
 
         <div className="portal-main-grid">
@@ -125,7 +233,7 @@ export default function ClientPortal({ lang }) {
           >
             <h2 id="portal-milestones-title">{t.timeline}</h2>
             <ol>
-              {project.milestones.map((milestone) => (
+              {live.milestones.map((milestone) => (
                 <li
                   key={milestone.id}
                   className={`portal-milestone portal-milestone--${milestone.status}`}
@@ -154,17 +262,27 @@ export default function ClientPortal({ lang }) {
               aria-labelledby="portal-next-title"
             >
               <h2 id="portal-next-title">{t.next}</h2>
-              <p>{localize(project.nextAction.text, lang)}</p>
+              <p>{localize(live.nextAction.text, lang)}</p>
               <dl>
                 <div>
                   <dt>{t.owner}</dt>
-                  <dd>{localize(project.nextAction.owner, lang)}</dd>
+                  <dd>{localize(live.nextAction.owner, lang)}</dd>
                 </div>
                 <div>
                   <dt>{t.due}</dt>
-                  <dd>{formatDate(project.nextAction.due, lang)}</dd>
+                  <dd>{formatDate(live.nextAction.due, lang)}</dd>
                 </div>
               </dl>
+              {live.source === 'quote' ? (
+                <button
+                  type="button"
+                  className="btn btn-primary portal-accept"
+                  onClick={handleAccept}
+                  disabled={accepted}
+                >
+                  {accepted ? t.accepted : t.accept}
+                </button>
+              ) : null}
             </section>
 
             <section
@@ -173,19 +291,33 @@ export default function ClientPortal({ lang }) {
             >
               <h2 id="portal-artifacts-title">{t.artifacts}</h2>
               <ul className="portal-artifacts">
-                {project.deliverables.map((item) => (
+                {live.deliverables.map((item) => (
                   <li key={item.id}>
-                    <a
-                      href={item.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <span>
-                        <strong>{localize(item.label, lang)}</strong>
-                        <small>{localize(item.detail, lang)}</small>
-                      </span>
-                      <span aria-hidden="true">↗</span>
-                    </a>
+                    {item.href ? (
+                      <a
+                        href={item.href}
+                        target={item.external ? '_blank' : undefined}
+                        rel={item.external ? 'noopener noreferrer' : undefined}
+                      >
+                        <span>
+                          <strong>{localize(item.label, lang)}</strong>
+                          <small>{localize(item.detail, lang)}</small>
+                        </span>
+                        <span aria-hidden="true">↗</span>
+                      </a>
+                    ) : (
+                      <button
+                        type="button"
+                        className="portal-artifact-btn"
+                        onClick={() => handleArtifact(item)}
+                      >
+                        <span>
+                          <strong>{localize(item.label, lang)}</strong>
+                          <small>{localize(item.detail, lang)}</small>
+                        </span>
+                        <span aria-hidden="true">↗</span>
+                      </button>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -199,8 +331,8 @@ export default function ClientPortal({ lang }) {
         >
           <h2 id="portal-updates-title">{t.updates}</h2>
           <ol>
-            {project.updates.map((update) => (
-              <li key={`${update.date}-${update.author}`}>
+            {live.updates.map((update) => (
+              <li key={`${update.date}-${update.author}-${update.body?.en}`}>
                 <div className="portal-update-meta">
                   <strong>{update.author}</strong>
                   <time dateTime={update.date}>
@@ -217,16 +349,34 @@ export default function ClientPortal({ lang }) {
           <a
             className="btn btn-primary"
             href={`mailto:${EMAIL}?subject=${encodeURIComponent(
-              `Project ${project.projectId} question`
+              `Project ${live.projectId} question`
             )}`}
           >
             {t.contact}
           </a>
+          <button
+            type="button"
+            className="btn btn-outline"
+            onClick={() => window.print()}
+          >
+            {t.print}
+          </button>
+          <button
+            type="button"
+            className="btn btn-outline"
+            onClick={handleCopyShare}
+          >
+            {copyState === 'ok'
+              ? t.copied
+              : copyState === 'fail'
+                ? t.copyFail
+                : t.copy}
+          </button>
           <a className="btn btn-outline" href={ESTIMATOR_URL}>
             {t.back}
           </a>
-          <a className="portal-copy-link" href={portalHome}>
-            {en ? 'Permanent demo link' : '固定演示链接'}
+          <a className="portal-copy-link" href={shareUrl}>
+            {en ? 'Shareable link' : '可分享链接'}
           </a>
         </div>
       </div>

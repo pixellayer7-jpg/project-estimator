@@ -19,7 +19,8 @@ import {
   openSowPrintWindow,
 } from '../utils/sowGenerator'
 import { openDepositInvoiceWindow } from '../utils/invoiceGenerator'
-import { LANDING_URL, EMAIL } from '../config/site'
+import { buildPortalQuoteUrl, buildProposalUrl } from '../utils/portalFromQuote'
+import { LANDING_URL, EMAIL, ESTIMATOR_URL } from '../config/site'
 import {
   buildLandingContactUrl,
   isHandoffOriginCompatible,
@@ -50,6 +51,10 @@ const STRINGS_EN = {
   addOnsLabel: 'Add-ons',
   extraLabel: 'Extra sections or pages',
   extraPlaceholder: '0',
+  clientLabel: 'Client name (optional)',
+  clientPlaceholder: 'Acme Studio',
+  clientHint:
+    'Appears on the shareable proposal, deposit invoice, and client portal.',
   resultLabel: 'Estimated range',
   disclaimer:
     'Indicative only — not a binding offer. Final scope and price are agreed in writing.',
@@ -78,6 +83,16 @@ const STRINGS_EN = {
   printPdf: 'Print / Save as PDF',
   printAria:
     'Open print dialog to save or print the estimate (uses your browser)',
+  portalPreview: 'Preview client portal',
+  portalPreviewAria:
+    'Open a client status page generated from this quote (no login required)',
+  portalPreviewSub:
+    'Same price, scope, and quote ID — shareable without API secrets.',
+  proposalOpen: 'Open proposal',
+  proposalOpenAria:
+    'Open a shareable in-app proposal and deposit invoice for this quote',
+  proposalOpenSub:
+    'Same URL for SOW + invoice — client can review, print, and accept.',
   refLabel: 'Quote reference',
   persistedHint: 'Your choices are saved on this device until you reset.',
   saveToServer: 'Save online copy',
@@ -124,6 +139,9 @@ const STRINGS_ZH = {
   addOnsLabel: '附加项',
   extraLabel: '额外区块或页面数量',
   extraPlaceholder: '0',
+  clientLabel: '客户名称（可选）',
+  clientPlaceholder: '示例工作室',
+  clientHint: '会出现在可分享提案、定金发票与客户状态页上。',
   resultLabel: '估算区间',
   disclaimer: '仅供参考，不构成正式报价；最终范围与价格以书面约定为准。',
   cta: '用邮件发送此估算',
@@ -147,6 +165,12 @@ const STRINGS_ZH = {
   printInvoiceAria: '打开定金发票草案以便打印 / 另存为 PDF',
   printPdf: '打印 / 另存为 PDF',
   printAria: '打开打印对话框，可将估算另存为 PDF 或打印（由浏览器完成）',
+  portalPreview: '预览客户状态页',
+  portalPreviewAria: '打开由本报价生成的客户状态页（无需登录）',
+  portalPreviewSub: '同一价格、范围与报价编号 — 无需 API 密钥即可分享。',
+  proposalOpen: '打开提案',
+  proposalOpenAria: '打开本报价的可分享站内提案与定金发票',
+  proposalOpenSub: '同一链接包含 SOW 与发票 — 客户可审阅、打印并接受。',
   refLabel: '报价编号',
   persistedHint: '选项会保存在本机浏览器中，直到你点击重置。',
   saveToServer: '保存线上副本',
@@ -186,6 +210,7 @@ const defaultForm = {
   projectType: 'landing',
   addOnIds: [],
   extraSections: '0',
+  clientName: '',
 }
 
 export default function Calculator({ lang = 'en', onHydratedLang }) {
@@ -220,7 +245,7 @@ export default function Calculator({ lang = 'en', onHydratedLang }) {
   const hydrateGen = useRef(0)
   const projectBtnRefs = useRef([])
 
-  const { projectType, addOnIds, extraSections } = form
+  const { projectType, addOnIds, extraSections, clientName = '' } = form
 
   useEffect(() => {
     const id = window.setTimeout(() => saveEstimatorForm(form), 400)
@@ -312,12 +337,15 @@ export default function Calculator({ lang = 'en', onHydratedLang }) {
     const params = new URLSearchParams(window.location.search)
     if (params.get('load')) return
     const parsed = parseCalculatorUrlParams()
-    if (!parsed.projectType && !parsed.addOnIds) return
+    if (!parsed.projectType && !parsed.addOnIds && !parsed.extraSections) return
     setForm((f) => {
       const next = {
         ...f,
         ...(parsed.projectType ? { projectType: parsed.projectType } : {}),
         ...(parsed.addOnIds ? { addOnIds: parsed.addOnIds } : {}),
+        ...(parsed.extraSections
+          ? { extraSections: parsed.extraSections }
+          : {}),
       }
       saveEstimatorForm(next)
       return next
@@ -438,6 +466,7 @@ export default function Calculator({ lang = 'en', onHydratedLang }) {
       min,
       max,
       quoteRef,
+      clientName,
     })
     downloadSowMarkdown(md)
   }
@@ -451,6 +480,7 @@ export default function Calculator({ lang = 'en', onHydratedLang }) {
       min,
       max,
       quoteRef,
+      clientName,
     })
   }
 
@@ -467,6 +497,7 @@ export default function Calculator({ lang = 'en', onHydratedLang }) {
       min,
       max,
       quoteRef,
+      clientName,
     })
   }
 
@@ -741,6 +772,29 @@ export default function Calculator({ lang = 'en', onHydratedLang }) {
             </p>
           </div>
 
+          <div className="calc-row">
+            <label className="calc-label" htmlFor="client-name">
+              {t.clientLabel}
+            </label>
+            <input
+              id="client-name"
+              name="clientName"
+              type="text"
+              maxLength={80}
+              value={clientName}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, clientName: e.target.value }))
+              }
+              className="calc-input"
+              placeholder={t.clientPlaceholder}
+              autoComplete="organization"
+              aria-describedby="client-hint"
+            />
+            <p id="client-hint" className="calc-hint">
+              {t.clientHint}
+            </p>
+          </div>
+
           <div className="calc-actions no-print">
             <button type="button" className="btn-ghost" onClick={handleReset}>
               {t.reset}
@@ -846,6 +900,37 @@ export default function Calculator({ lang = 'en', onHydratedLang }) {
                   : t.ctaSiteApi}
               </button>
             ) : null}
+            <a
+              href={buildProposalUrl({
+                base: ESTIMATOR_URL,
+                tab: 'sow',
+                projectType,
+                addOnIds,
+                extraSections,
+                quoteRef,
+                lang,
+                clientName,
+              })}
+              className="btn btn-primary"
+              aria-label={t.proposalOpenAria}
+            >
+              {t.proposalOpen}
+            </a>
+            <a
+              href={buildPortalQuoteUrl({
+                base: ESTIMATOR_URL,
+                projectType,
+                addOnIds,
+                extraSections,
+                quoteRef,
+                lang,
+                clientName,
+              })}
+              className="btn btn-primary"
+              aria-label={t.portalPreviewAria}
+            >
+              {t.portalPreview}
+            </a>
             <a href={mailtoHref} className="btn btn-outline">
               {t.cta}
             </a>
@@ -854,6 +939,8 @@ export default function Calculator({ lang = 'en', onHydratedLang }) {
           {quoteApiBase ? (
             <p className="calc-cta-sub">{t.ctaSiteApiSub}</p>
           ) : null}
+          <p className="calc-cta-sub">{t.proposalOpenSub}</p>
+          <p className="calc-cta-sub">{t.portalPreviewSub}</p>
           <p className="calc-cta-sub calc-cta-sub--muted">{t.ctaSub}</p>
 
           {quoteApiBase ? (

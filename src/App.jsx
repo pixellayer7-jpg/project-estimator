@@ -1,12 +1,26 @@
-import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
 import Calculator from './components/Calculator'
 import PricingOverview from './components/PricingOverview'
 import EcosystemStrip from './components/EcosystemStrip'
 import { GITHUB_PROFILE, LANDING_URL, EMAIL } from './config/site'
+import { portalDemo } from './data/clientPortalDemo'
+import {
+  buildPortalFromQuote,
+  resolveQuoteInputFromLocation,
+} from './utils/portalFromQuote'
+import { isQuoteAccepted } from './utils/portalAcceptStore'
 
 const ContactForm = lazy(() => import('./components/ContactForm'))
 const CrmAdmin = lazy(() => import('./components/CrmAdmin'))
 const ClientPortal = lazy(() => import('./components/ClientPortal'))
+const Proposal = lazy(() => import('./components/Proposal'))
 
 const LANG_KEY = 'pixellayer-estimator-lang'
 
@@ -19,17 +33,53 @@ function detectAdminMode() {
   }
 }
 
-function detectPortalMode() {
+function detectPortalKind() {
   try {
-    return new URLSearchParams(window.location.search).get('portal') === 'demo'
+    const v = new URLSearchParams(window.location.search).get('portal')
+    if (v === 'demo' || v === 'quote') return v
   } catch {
-    return false
+    /* ignore */
   }
+  return null
+}
+
+function detectProposalTab() {
+  try {
+    const v = new URLSearchParams(window.location.search).get('proposal')
+    if (v === 'invoice') return 'invoice'
+    if (v === 'sow' || v === '1' || v === 'true') return 'sow'
+  } catch {
+    /* ignore */
+  }
+  return null
+}
+
+function resolvePortalProject(kind) {
+  if (kind !== 'quote') return portalDemo
+  const input = resolveQuoteInputFromLocation()
+  return buildPortalFromQuote({
+    ...input,
+    accepted: isQuoteAccepted(input.quoteRef),
+  })
 }
 
 export default function App() {
   const [showAdmin] = useState(detectAdminMode)
-  const [showPortal] = useState(detectPortalMode)
+  const [portalKind] = useState(detectPortalKind)
+  const [proposalTab] = useState(detectProposalTab)
+  const showProposal = Boolean(proposalTab)
+  const showPortal = Boolean(portalKind) && !showProposal
+  const quoteInput = useMemo(
+    () =>
+      showProposal || portalKind === 'quote'
+        ? resolveQuoteInputFromLocation()
+        : null,
+    [showProposal, portalKind]
+  )
+  const portalProject = useMemo(
+    () => resolvePortalProject(portalKind),
+    [portalKind]
+  )
   const [lang, setLang] = useState(() => {
     try {
       const params = new URLSearchParams(window.location.search)
@@ -50,31 +100,46 @@ export default function App() {
       /* ignore */
     }
     document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en'
-    document.title = showPortal
-      ? lang === 'zh'
-        ? '客户项目状态（演示）— PixelLayer L.L.C'
-        : 'Client Project Status (Demo) — PixelLayer L.L.C'
-      : lang === 'zh'
-        ? '项目报价计算器 — PixelLayer L.L.C'
-        : 'Project Quote Calculator — PixelLayer L.L.C'
-  }, [lang, showPortal])
+    if (showProposal) {
+      document.title =
+        lang === 'zh'
+          ? '客户提案 — PixelLayer L.L.C'
+          : 'Client Proposal — PixelLayer L.L.C'
+    } else if (showPortal) {
+      document.title =
+        lang === 'zh'
+          ? '客户项目状态 — PixelLayer L.L.C'
+          : 'Client Project Status — PixelLayer L.L.C'
+    } else {
+      document.title =
+        lang === 'zh'
+          ? '项目报价计算器 — PixelLayer L.L.C'
+          : 'Project Quote Calculator — PixelLayer L.L.C'
+    }
+  }, [lang, showPortal, showProposal])
 
   const handleHydratedLang = useCallback((next) => {
     if (next === 'en' || next === 'zh') setLang(next)
   }, [])
 
+  const skipLabel = showProposal
+    ? lang === 'en'
+      ? 'Skip to proposal'
+      : '跳到提案'
+    : showPortal
+      ? lang === 'en'
+        ? 'Skip to project status'
+        : '跳到项目状态'
+      : lang === 'en'
+        ? 'Skip to calculator'
+        : '跳到计算器'
+
   return (
     <>
       <a href="#main-content" className="skip-link">
-        {showPortal
-          ? lang === 'en'
-            ? 'Skip to project status'
-            : '跳到项目状态'
-          : lang === 'en'
-            ? 'Skip to calculator'
-            : '跳到计算器'}
+        {skipLabel}
       </a>
-      {!showAdmin && !showPortal ? (
+      {!showAdmin && !showPortal && !showProposal ? (
         <a href="#contact" className="skip-link skip-link--second">
           {lang === 'en' ? 'Skip to contact form' : '跳到留言表单'}
         </a>
@@ -133,9 +198,17 @@ export default function App() {
       </header>
       <EcosystemStrip lang={lang} />
       <main id="main-content">
-        {showPortal ? (
+        {showProposal ? (
+          <Suspense fallback={<p role="status">Loading proposal…</p>}>
+            <Proposal
+              lang={lang}
+              quoteInput={quoteInput}
+              initialTab={proposalTab}
+            />
+          </Suspense>
+        ) : showPortal ? (
           <Suspense fallback={<p role="status">Loading client portal…</p>}>
-            <ClientPortal lang={lang} />
+            <ClientPortal lang={lang} project={portalProject} />
           </Suspense>
         ) : showAdmin ? (
           <Suspense fallback={<p role="status">Loading admin…</p>}>

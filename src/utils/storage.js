@@ -66,10 +66,13 @@ export function loadEstimatorForm() {
       ? p.addOnIds.filter((id) => addOns.some((a) => a.id === id))
       : []
     const extraSections = normalizeExtraSections(p.extraSections)
+    const clientName =
+      typeof p.clientName === 'string' ? p.clientName.trim().slice(0, 80) : ''
     return {
       projectType: p.projectType,
       addOnIds,
       extraSections,
+      ...(clientName ? { clientName } : {}),
     }
   } catch {
     return null
