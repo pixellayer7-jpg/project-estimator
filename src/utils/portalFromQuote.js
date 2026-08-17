@@ -20,7 +20,7 @@ const RUSH_DAYS = {
   dashboard: 14,
 }
 
-function isoDate(date) {
+export function isoDate(date) {
   return new Date(date).toISOString().slice(0, 10)
 }
 
@@ -177,6 +177,36 @@ export function buildProposalUrl({
 }
 
 /**
+ * Indicative milestone dates from calculator type + rush add-on.
+ */
+export function buildQuoteSchedule({
+  projectType = 'landing',
+  addOnIds = [],
+  now = new Date(),
+} = {}) {
+  const typeId = VALID_TYPES.has(projectType) ? projectType : 'landing'
+  const addons = (addOnIds || []).filter((id) => VALID_ADDONS.has(id))
+  const rush = addons.includes('rush')
+  const duration = rush ? RUSH_DAYS[typeId] : DURATION_DAYS[typeId]
+  const start = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+  )
+  return {
+    kickoff: isoDate(start),
+    design: isoDate(addUtcDays(start, rush ? 1 : 2)),
+    preview: isoDate(
+      addUtcDays(start, Math.max(3, Math.round(duration * 0.35)))
+    ),
+    revisions: isoDate(
+      addUtcDays(start, Math.max(5, Math.round(duration * 0.75)))
+    ),
+    delivery: isoDate(addUtcDays(start, duration)),
+    duration,
+    rush,
+  }
+}
+
+/**
  * Build a ClientPortal project model from calculator quote state.
  * @param {object} input
  * @param {Date} [input.now]
@@ -188,6 +218,8 @@ export function buildPortalFromQuote({
   quoteRef = null,
   clientName = '',
   accepted = false,
+  depositSent = false,
+  signerName = '',
   now = new Date(),
 } = {}) {
   const type = projectTypes.find((t) => t.id === projectType) || projectTypes[0]
@@ -196,22 +228,18 @@ export function buildPortalFromQuote({
   const { min, max } = calculateQuote(type.id, addons, sections)
   const fee = suggestedFee(min, max)
   const deposit = Math.round(fee * 0.5)
-  const rush = addons.includes('rush')
-  const duration = rush ? RUSH_DAYS[type.id] : DURATION_DAYS[type.id]
-  const start = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
-  )
-  const target = addUtcDays(start, duration)
-  const designAt = addUtcDays(start, rush ? 1 : 2)
-  const buildAt = addUtcDays(start, Math.max(3, Math.round(duration * 0.35)))
-  const reviewAt = addUtcDays(start, Math.max(5, Math.round(duration * 0.75)))
+  const schedule = buildQuoteSchedule({
+    projectType: type.id,
+    addOnIds: addons,
+    now,
+  })
   const addOnLabels = addons
     .map((id) => addOns.find((a) => a.id === id))
     .filter(Boolean)
     .map((a) => ({ en: a.labelEn, zh: a.labelZh }))
 
   const clientLabel = sanitizeClientName(clientName)
-  const today = isoDate(start)
+  const today = schedule.kickoff
   const project = {
     source: 'quote',
     accepted: false,
@@ -238,7 +266,7 @@ export function buildPortalFromQuote({
     status: 'draft',
     dateRange: {
       start: today,
-      target: isoDate(target),
+      target: schedule.delivery,
     },
     budget: `$${min.toLocaleString()} – $${max.toLocaleString()} USD`,
     suggestedFee: fee,
@@ -258,7 +286,7 @@ export function buildPortalFromQuote({
       {
         id: 'design',
         status: 'upcoming',
-        date: isoDate(designAt),
+        date: schedule.design,
         title: { en: 'Structure & visual direction', zh: '结构与视觉方向' },
         detail: {
           en: 'Information architecture and component direction after deposit / written acceptance.',
@@ -268,7 +296,7 @@ export function buildPortalFromQuote({
       {
         id: 'build',
         status: 'upcoming',
-        date: isoDate(buildAt),
+        date: schedule.preview,
         title: { en: 'Frontend implementation', zh: '前端开发' },
         detail: {
           en: `${type.labelEn} build with selected add-ons and ${sections} extra section(s).`,
@@ -278,7 +306,7 @@ export function buildPortalFromQuote({
       {
         id: 'review',
         status: 'upcoming',
-        date: isoDate(reviewAt),
+        date: schedule.revisions,
         title: { en: 'Client review & revisions', zh: '客户审核与修订' },
         detail: {
           en: 'One consolidated feedback round against the preview build.',
@@ -288,7 +316,7 @@ export function buildPortalFromQuote({
       {
         id: 'launch',
         status: 'upcoming',
-        date: isoDate(target),
+        date: schedule.delivery,
         title: { en: 'Launch & handoff', zh: '上线与交接' },
         detail: {
           en: 'Production deploy, repository handoff, and final payment.',
@@ -360,7 +388,7 @@ export function buildPortalFromQuote({
     ],
     nextAction: {
       owner: { en: 'Client', zh: '客户' },
-      due: isoDate(addUtcDays(start, 3)),
+      due: isoDate(addUtcDays(new Date(`${today}T00:00:00Z`), 3)),
       text: {
         en: `Review the SOW and accept this scope, then pay the $${deposit.toLocaleString()} USD deposit to kickoff.`,
         zh: `审阅 SOW 并接受此范围，随后支付 $${deposit.toLocaleString()} USD 定金即可开工。`,
@@ -368,10 +396,13 @@ export function buildPortalFromQuote({
     },
   }
 
-  return accepted ? withQuoteAcceptance(project, now) : project
+  if (accepted && depositSent) {
+    return withDepositMarked(project, now, { signerName })
+  }
+  return accepted ? withQuoteAcceptance(project, now, { signerName }) : project
 }
 
-export function withQuoteAcceptance(project, now = new Date()) {
+export function withQuoteAcceptance(project, now = new Date(), details = {}) {
   if (!project || project.source !== 'quote') return project
   const today = isoDate(now)
   const milestones = project.milestones.map((m) => {
@@ -382,29 +413,64 @@ export function withQuoteAcceptance(project, now = new Date()) {
     return { ...m, status: 'upcoming' }
   })
   const deposit = project.deposit
+  const signer = sanitizeClientName(details.signerName)
   return {
     ...project,
     accepted: true,
+    depositSent: false,
+    signerName: signer,
     status: 'in-progress',
     milestones,
     nextAction: {
       owner: { en: 'Client', zh: '客户' },
       due: isoDate(addUtcDays(now, 2)),
       text: {
-        en: `Scope accepted. Send the $${Number(deposit).toLocaleString()} USD deposit so build can start.`,
-        zh: `范围已接受。请支付 $${Number(deposit).toLocaleString()} USD 定金以便开始开发。`,
+        en: `Scope accepted${signer ? ` by ${signer}` : ''}. Send the $${Number(deposit).toLocaleString()} USD deposit so build can start.`,
+        zh: `范围已接受${signer ? `（${signer}）` : ''}。请支付 $${Number(deposit).toLocaleString()} USD 定金以便开始开发。`,
       },
     },
     updates: [
       {
         date: today,
-        author: 'Client',
+        author: signer || 'Client',
         body: {
-          en: 'Accepted the indicative scope from the calculator. Awaiting deposit to start build.',
-          zh: '已接受计算器生成的参考范围。等待定金到账后开始开发。',
+          en: signer
+            ? `Signed the indicative scope as ${signer}. Awaiting deposit to start build.`
+            : 'Accepted the indicative scope from the calculator. Awaiting deposit to start build.',
+          zh: signer
+            ? `${signer} 已签署参考范围。等待定金到账后开始开发。`
+            : '已接受计算器生成的参考范围。等待定金到账后开始开发。',
         },
       },
       ...(project.updates || []),
+    ],
+  }
+}
+
+export function withDepositMarked(project, now = new Date(), details = {}) {
+  const accepted = withQuoteAcceptance(project, now, details)
+  const today = isoDate(now)
+  return {
+    ...accepted,
+    depositSent: true,
+    nextAction: {
+      owner: { en: 'Client', zh: '客户' },
+      due: isoDate(addUtcDays(now, 2)),
+      text: {
+        en: 'Deposit marked as sent. Complete the kickoff checklist (assets, copy, access) so build can stay on schedule.',
+        zh: '已标记定金已汇出。请完成开工清单（素材、文案、权限）以便开发按期进行。',
+      },
+    },
+    updates: [
+      {
+        date: today,
+        author: accepted.signerName || 'Client',
+        body: {
+          en: 'Marked the deposit as sent. Kickoff checklist is next.',
+          zh: '已标记定金已汇出。下一步完成开工清单。',
+        },
+      },
+      ...(accepted.updates || []),
     ],
   }
 }

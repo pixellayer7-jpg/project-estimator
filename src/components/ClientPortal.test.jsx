@@ -69,6 +69,11 @@ describe('ClientPortal', () => {
     expect(
       screen.getByRole('link', { name: /Open proposal \(SOW\)/i })
     ).toHaveAttribute('href', expect.stringContaining('proposal=sow'))
+    await user.click(screen.getByRole('button', { name: /Mark deposit sent/i }))
+    expect(
+      screen.getByRole('button', { name: /Deposit marked sent/i })
+    ).toBeDisabled()
+    expect(screen.getByLabelText(/Brand assets/i)).toBeInTheDocument()
   })
 })
 

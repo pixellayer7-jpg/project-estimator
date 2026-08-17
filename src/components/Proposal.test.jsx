@@ -31,6 +31,8 @@ describe('Proposal', () => {
     expect(
       screen.getByRole('link', { name: /Open client portal/i })
     ).toHaveAttribute('href', expect.stringContaining('portal=quote'))
+    expect(screen.queryByText('DATE')).not.toBeInTheDocument()
+    expect(screen.getByLabelText(/Type your name/i)).toHaveValue('Acme Studio')
   })
 
   it('switches to the deposit invoice tab', async () => {
@@ -57,5 +59,21 @@ describe('Proposal', () => {
     expect(isQuoteAccepted(quoteInput.quoteRef)).toBe(true)
     expect(assign).toHaveBeenCalled()
     vi.unstubAllGlobals()
+  })
+
+  it('requires a typed name before accepting', async () => {
+    const user = userEvent.setup()
+    render(
+      <Proposal lang="en" quoteInput={{ ...quoteInput, clientName: '' }} />
+    )
+    const input = screen.getByLabelText(/Type your name/i)
+    await user.clear(input)
+    expect(
+      screen.getByRole('button', { name: /Accept this scope/i })
+    ).toBeDisabled()
+    await user.type(input, 'Jamie Chen')
+    expect(
+      screen.getByRole('button', { name: /Accept this scope/i })
+    ).toBeEnabled()
   })
 })

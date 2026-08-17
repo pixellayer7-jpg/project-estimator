@@ -3,7 +3,9 @@ import {
   buildPortalFromQuote,
   buildPortalQuoteUrl,
   buildProposalUrl,
+  buildQuoteSchedule,
   resolveQuoteInputFromLocation,
+  withDepositMarked,
   withQuoteAcceptance,
 } from './portalFromQuote'
 import { calculateQuote } from '../data/pricing'
@@ -124,5 +126,39 @@ describe('withQuoteAcceptance', () => {
       'current'
     )
     expect(accepted.updates[0].author).toBe('Client')
+  })
+})
+
+describe('buildQuoteSchedule', () => {
+  it('shortens delivery when rush is selected', () => {
+    const now = new Date('2026-08-17T12:00:00Z')
+    const normal = buildQuoteSchedule({
+      projectType: 'dashboard',
+      addOnIds: [],
+      now,
+    })
+    const rush = buildQuoteSchedule({
+      projectType: 'dashboard',
+      addOnIds: ['rush'],
+      now,
+    })
+    expect(rush.delivery < normal.delivery).toBe(true)
+    expect(normal.kickoff).toBe('2026-08-17')
+  })
+})
+
+describe('withDepositMarked', () => {
+  it('keeps build current and records deposit sent', () => {
+    const project = buildPortalFromQuote({
+      projectType: 'landing',
+      quoteRef: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',
+      now: new Date('2026-08-17T12:00:00Z'),
+    })
+    const next = withDepositMarked(project, new Date('2026-08-17T12:00:00Z'), {
+      signerName: 'Jamie Chen',
+    })
+    expect(next.depositSent).toBe(true)
+    expect(next.signerName).toBe('Jamie Chen')
+    expect(next.updates[0].body.en).toMatch(/deposit/i)
   })
 })

@@ -5,9 +5,16 @@ import { openSowPrintWindow } from '../utils/sowGenerator'
 import { openDepositInvoiceWindow } from '../utils/invoiceGenerator'
 import {
   buildPortalQuoteUrl,
+  buildQuoteSchedule,
+  withDepositMarked,
   withQuoteAcceptance,
 } from '../utils/portalFromQuote'
-import { acceptQuote } from '../utils/portalAcceptStore'
+import {
+  acceptQuote,
+  getQuoteAcceptance,
+  markDepositSent,
+  setKickoffItem,
+} from '../utils/portalAcceptStore'
 import { projectTypes } from '../data/pricing'
 
 const STATUS_LABELS = {
@@ -47,13 +54,24 @@ function shareUrlFor(project, lang) {
 
 export default function ClientPortal({ lang, project = portalDemo }) {
   const en = lang === 'en'
-  const [accepted, setAccepted] = useState(() => Boolean(project.accepted))
+  const quoteRef = project.quotePayload?.quoteRef
+  const stored = quoteRef ? getQuoteAcceptance(quoteRef) : null
+  const [accepted, setAccepted] = useState(() =>
+    Boolean(project.accepted || stored?.acceptedAt)
+  )
+  const [depositSent, setDepositSent] = useState(() =>
+    Boolean(stored?.depositMarkedAt)
+  )
+  const [kickoff, setKickoff] = useState(
+    () => stored?.kickoff || { assets: false, copy: false, access: false }
+  )
   const [copyState, setCopyState] = useState('idle')
 
   const live = useMemo(() => {
     if (project.source !== 'quote') return project
+    if (depositSent) return withDepositMarked(project)
     return accepted ? withQuoteAcceptance(project) : project
-  }, [project, accepted])
+  }, [project, accepted, depositSent])
 
   const progress = calculatePortalProgress(live.milestones)
   const shareUrl = shareUrlFor(live, lang)
@@ -77,6 +95,13 @@ export default function ClientPortal({ lang, project = portalDemo }) {
         back: 'Back to calculator',
         accept: 'Accept this scope',
         accepted: 'Scope accepted',
+        depositSent: 'Deposit marked sent',
+        markDeposit: 'Mark deposit sent',
+        kickoff: 'Kickoff checklist',
+        kickoffAssets: 'Brand assets / logos / fonts',
+        kickoffCopy: 'Final copy (EN / 中文)',
+        kickoffAccess: 'Domain, DNS, or hosting access',
+        signed: 'Signed in this browser',
         print: 'Print status page',
         copy: 'Copy share link',
         copied: 'Link copied',
@@ -104,6 +129,13 @@ export default function ClientPortal({ lang, project = portalDemo }) {
         back: '返回计算器',
         accept: '接受此范围',
         accepted: '范围已接受',
+        depositSent: '已标记定金已汇出',
+        markDeposit: '标记定金已汇出',
+        kickoff: '开工清单',
+        kickoffAssets: '品牌素材 / Logo / 字体',
+        kickoffCopy: '定稿文案（中/英）',
+        kickoffAccess: '域名、DNS 或托管权限',
+        signed: '已在本浏览器签署',
         print: '打印状态页',
         copy: '复制分享链接',
         copied: '链接已复制',
@@ -126,6 +158,10 @@ export default function ClientPortal({ lang, project = portalDemo }) {
         max: payload.max,
         quoteRef: payload.quoteRef,
         clientName: payload.clientName,
+        dates: buildQuoteSchedule({
+          projectType: payload.projectTypeId,
+          addOnIds: payload.addOnIds,
+        }),
       })
       return
     }
@@ -147,9 +183,19 @@ export default function ClientPortal({ lang, project = portalDemo }) {
   }
 
   function handleAccept() {
-    const ref = live.quotePayload?.quoteRef
-    if (ref) acceptQuote(ref)
+    if (quoteRef) acceptQuote(quoteRef)
     setAccepted(true)
+  }
+
+  function handleMarkDeposit() {
+    if (quoteRef) markDepositSent(quoteRef)
+    setDepositSent(true)
+  }
+
+  function handleKickoffToggle(key) {
+    const next = !kickoff[key]
+    if (quoteRef) setKickoffItem(quoteRef, key, next)
+    setKickoff((prev) => ({ ...prev, [key]: next }))
   }
 
   async function handleCopyShare() {
@@ -274,16 +320,61 @@ export default function ClientPortal({ lang, project = portalDemo }) {
                 </div>
               </dl>
               {live.source === 'quote' ? (
-                <button
-                  type="button"
-                  className="btn btn-primary portal-accept"
-                  onClick={handleAccept}
-                  disabled={accepted}
-                >
-                  {accepted ? t.accepted : t.accept}
-                </button>
+                <>
+                  <button
+                    type="button"
+                    className="btn btn-primary portal-accept"
+                    onClick={handleAccept}
+                    disabled={accepted}
+                  >
+                    {accepted ? t.accepted : t.accept}
+                  </button>
+                  {accepted ? (
+                    <button
+                      type="button"
+                      className="btn btn-outline portal-accept"
+                      onClick={handleMarkDeposit}
+                      disabled={depositSent}
+                    >
+                      {depositSent ? t.depositSent : t.markDeposit}
+                    </button>
+                  ) : null}
+                </>
               ) : null}
             </section>
+
+            {live.source === 'quote' && accepted ? (
+              <section
+                className="portal-panel portal-kickoff"
+                aria-labelledby="portal-kickoff-title"
+              >
+                <h2 id="portal-kickoff-title">{t.kickoff}</h2>
+                {stored?.signerName ? (
+                  <p className="portal-signed">
+                    {t.signed}: {stored.signerName}
+                  </p>
+                ) : null}
+                <ul className="portal-kickoff-list">
+                  {[
+                    ['assets', t.kickoffAssets],
+                    ['copy', t.kickoffCopy],
+                    ['access', t.kickoffAccess],
+                  ].map(([key, label]) => (
+                    <li key={key}>
+                      <label className="calc-check" htmlFor={`kickoff-${key}`}>
+                        <input
+                          id={`kickoff-${key}`}
+                          type="checkbox"
+                          checked={Boolean(kickoff[key])}
+                          onChange={() => handleKickoffToggle(key)}
+                        />
+                        <span>{label}</span>
+                      </label>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
 
             <section
               className="portal-panel"

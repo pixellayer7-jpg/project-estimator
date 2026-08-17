@@ -8,3 +8,10 @@ export const ESTIMATOR_URL =
 
 export const GITHUB_PROFILE = 'https://github.com/pixellayer7-jpg'
 export const EMAIL = 'pixellayer7@gmail.com'
+
+export const PAYMENT_METHOD = {
+  en: 'Bank transfer / Zelle / agreed method (confirmed by email)',
+  zh: '银行转账 / Zelle / 邮件确认的约定方式',
+}
+
+export const PROVIDER_SIGN = 'He Zhang · PixelLayer L.L.C'

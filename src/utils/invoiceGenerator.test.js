@@ -23,7 +23,7 @@ describe('invoiceGenerator', () => {
     expect(html).toContain('INV-')
     expect(html).toContain('$1,150 USD')
     expect(html).toContain('window.print()')
-    expect(html).toContain('CLIENT_LEGAL_NAME')
+    expect(html).toContain('Bank transfer')
   })
 
   it('escapes client name in invoice HTML', () => {

@@ -1,4 +1,6 @@
 import { projectTypes, addOns } from '../data/pricing'
+import { PAYMENT_METHOD } from '../config/site'
+import { suggestedFee } from './invoiceGenerator'
 
 /**
  * Build a draft Statement of Work (Markdown) from calculator state.
@@ -29,8 +31,15 @@ export function buildSowMarkdown({
   max,
   quoteRef = null,
   clientName = '',
+  dates = {},
 }) {
   const en = lang === 'en'
+  const fee = suggestedFee(min, max)
+  const payment = PAYMENT_METHOD[en ? 'en' : 'zh']
+  const kickoff = dates.kickoff || 'DATE'
+  const preview = dates.preview || 'DATE'
+  const revisions = dates.revisions || 'DATE'
+  const delivery = dates.delivery || 'DATE'
   const type = projectTypes.find((p) => p.id === projectTypeId)
   const typeLabel = type ? (en ? type.labelEn : type.labelZh) : projectTypeId
 
@@ -78,17 +87,17 @@ ${refLine}
 
 | Milestone | Target date |
 | --------- | ----------- |
-| Kickoff + deposit | **DATE** |
-| First preview | **DATE** |
-| Revision round(s) | **DATE** |
-| Final delivery | **DATE** |
+| Kickoff + deposit | **${kickoff}** |
+| First preview | **${preview}** |
+| Revision round(s) | **${revisions}** |
+| Final delivery | **${delivery}** |
 
 ## 5. Investment
 
 - **Indicative range (calculator):** ${range}
-- **Fixed fee (to confirm):** **USD_AMOUNT**
+- **Suggested fixed fee:** $${fee.toLocaleString()} USD
 - **Payment schedule:** 50% deposit, 50% on final delivery
-- **Payment method:** **METHOD**
+- **Payment method:** ${payment}
 
 Estimates from the public calculator are **indicative only** until this SOW is signed.
 
@@ -146,17 +155,17 @@ ${refLine}
 
 | 节点 | 目标日期 |
 | ---- | -------- |
-| 启动 + 定金 | **DATE** |
-| 首次预览 | **DATE** |
-| 修订轮次 | **DATE** |
-| 最终交付 | **DATE** |
+| 启动 + 定金 | **${kickoff}** |
+| 首次预览 | **${preview}** |
+| 修订轮次 | **${revisions}** |
+| 最终交付 | **${delivery}** |
 
 ## 5. 费用
 
 - **参考区间（计算器）：** ${range}
-- **固定费用（待确认）：** **USD_AMOUNT**
+- **建议固定价：** $${fee.toLocaleString()} USD
 - **付款方式：** 50% 定金，50% 验收后
-- **支付渠道：** **METHOD**
+- **支付渠道：** ${payment}
 
 公开计算器结果**仅供参考**，以双方签署本 SOW 为准。
 
@@ -209,6 +218,7 @@ function resolveSowLabels({
   max,
   quoteRef = null,
   clientName = '',
+  dates = {},
 }) {
   const en = lang === 'en'
   const type = projectTypes.find((p) => p.id === projectTypeId)
@@ -224,7 +234,23 @@ function resolveSowLabels({
     quoteRef ||
     (en ? 'QUOTE_REF (fill before send)' : 'QUOTE_REF（发送前填写）')
   const client = clientDisplayName(clientName, en)
-  return { en, typeLabel, addOnLabels, sections, range, ref, client }
+  const fee = suggestedFee(min, max)
+  const payment = PAYMENT_METHOD[en ? 'en' : 'zh']
+  return {
+    en,
+    typeLabel,
+    addOnLabels,
+    sections,
+    range,
+    ref,
+    client,
+    fee,
+    payment,
+    kickoff: dates.kickoff || 'DATE',
+    preview: dates.preview || 'DATE',
+    revisions: dates.revisions || 'DATE',
+    delivery: dates.delivery || 'DATE',
+  }
 }
 
 const PRINT_DOC_CSS = `
@@ -279,8 +305,21 @@ const PRINT_DOC_CSS = `
  * Client-facing HTML proposal (print → Save as PDF).
  */
 export function buildSowHtml(params) {
-  const { en, typeLabel, addOnLabels, sections, range, ref, client } =
-    resolveSowLabels(params)
+  const {
+    en,
+    typeLabel,
+    addOnLabels,
+    sections,
+    range,
+    ref,
+    client,
+    fee,
+    payment,
+    kickoff,
+    preview,
+    revisions,
+    delivery,
+  } = resolveSowLabels(params)
   const addOnsText = addOnLabels.length
     ? addOnLabels.join(en ? '; ' : '；')
     : en
@@ -328,18 +367,18 @@ export function buildSowHtml(params) {
 
     <h2>${en ? '4. Timeline' : '4. 里程碑'}</h2>
     <table>
-      <tr><th>${en ? 'Kickoff + deposit' : '启动 + 定金'}</th><td><strong>DATE</strong></td></tr>
-      <tr><th>${en ? 'First preview' : '首次预览'}</th><td><strong>DATE</strong></td></tr>
-      <tr><th>${en ? 'Revisions' : '修订轮次'}</th><td><strong>DATE</strong></td></tr>
-      <tr><th>${en ? 'Final delivery' : '最终交付'}</th><td><strong>DATE</strong></td></tr>
+      <tr><th>${en ? 'Kickoff + deposit' : '启动 + 定金'}</th><td><strong>${kickoff}</strong></td></tr>
+      <tr><th>${en ? 'First preview' : '首次预览'}</th><td><strong>${preview}</strong></td></tr>
+      <tr><th>${en ? 'Revisions' : '修订轮次'}</th><td><strong>${revisions}</strong></td></tr>
+      <tr><th>${en ? 'Final delivery' : '最终交付'}</th><td><strong>${delivery}</strong></td></tr>
     </table>
 
     <h2>${en ? '5. Investment' : '5. 费用'}</h2>
     <table>
       <tr><th>${en ? 'Indicative range' : '参考区间'}</th><td>${range}</td></tr>
-      <tr><th>${en ? 'Fixed fee' : '固定费用'}</th><td><strong>USD_AMOUNT</strong></td></tr>
+      <tr><th>${en ? 'Suggested fixed fee' : '建议固定价'}</th><td>$${fee.toLocaleString()} USD</td></tr>
       <tr><th>${en ? 'Schedule' : '付款节奏'}</th><td>${en ? '50% deposit, 50% on final delivery' : '50% 定金，50% 验收后'}</td></tr>
-      <tr><th>${en ? 'Method' : '支付渠道'}</th><td><strong>METHOD</strong></td></tr>
+      <tr><th>${en ? 'Method' : '支付渠道'}</th><td>${payment}</td></tr>
     </table>
 
     <h2>${en ? '6. Revisions' : '6. 修订'}</h2>

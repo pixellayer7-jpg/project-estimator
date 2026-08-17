@@ -1,15 +1,39 @@
 import { useEffect, useMemo, useState } from 'react'
 import { addOns, calculateQuote, projectTypes } from '../data/pricing'
-import { EMAIL, ESTIMATOR_URL } from '../config/site'
+import {
+  EMAIL,
+  ESTIMATOR_URL,
+  PAYMENT_METHOD,
+  PROVIDER_SIGN,
+} from '../config/site'
 import { invoiceNumber, suggestedFee } from '../utils/invoiceGenerator'
-import { acceptQuote, isQuoteAccepted } from '../utils/portalAcceptStore'
-import { buildPortalQuoteUrl, buildProposalUrl } from '../utils/portalFromQuote'
+import {
+  acceptQuote,
+  getQuoteAcceptance,
+  isQuoteAccepted,
+  sanitizeSignerName,
+} from '../utils/portalAcceptStore'
+import {
+  buildPortalQuoteUrl,
+  buildProposalUrl,
+  buildQuoteSchedule,
+} from '../utils/portalFromQuote'
 
 function clientLabel(clientName, en) {
   const name = String(clientName ?? '')
     .trim()
     .slice(0, 80)
   return name || (en ? 'CLIENT_LEGAL_NAME' : '客户法定名称')
+}
+
+function formatDate(value, lang) {
+  if (!value || value === 'DATE') return value
+  return new Intl.DateTimeFormat(lang === 'zh' ? 'zh-CN' : 'en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    timeZone: 'UTC',
+  }).format(new Date(`${value}T00:00:00Z`))
 }
 
 export default function Proposal({
@@ -20,8 +44,14 @@ export default function Proposal({
   const en = lang === 'en'
   const [tab, setTab] = useState(initialTab === 'invoice' ? 'invoice' : 'sow')
   const [copyState, setCopyState] = useState('idle')
+  const storedAccept = quoteInput?.quoteRef
+    ? getQuoteAcceptance(quoteInput.quoteRef)
+    : null
   const [accepted, setAccepted] = useState(() =>
     Boolean(quoteInput?.quoteRef && isQuoteAccepted(quoteInput.quoteRef))
+  )
+  const [signerName, setSignerName] = useState(
+    () => storedAccept?.signerName || quoteInput?.clientName || ''
   )
 
   const model = useMemo(() => {
@@ -56,6 +86,11 @@ export default function Proposal({
       deposit,
       invoiceId: invoiceNumber(quoteRef),
       client: clientLabel(clientName, en),
+      schedule: buildQuoteSchedule({
+        projectType: type.id,
+        addOnIds,
+      }),
+      payment: PAYMENT_METHOD[en ? 'en' : 'zh'],
     }
   }, [quoteInput, en])
 
@@ -139,7 +174,14 @@ export default function Proposal({
         issued: 'Issued',
         hint: 'Draft only — not legal advice. Confirm the fixed fee before sending.',
         acceptHint:
-          'Accepting records scope in this browser and opens the matching client portal.',
+          'Type your name to record acceptance in this browser, then open the matching client portal.',
+        signTitle: 'Typed acceptance',
+        signLabel: 'Type your name',
+        signHelp:
+          'Records indicative-scope acceptance on this device only — not a third-party e-sign product or a court-ready wet signature.',
+        signedBy: 'Signed by',
+        providerSign: 'Provider',
+        clientSign: 'Client',
       }
     : {
         badge: '可分享提案',
@@ -185,11 +227,29 @@ export default function Proposal({
         dueOn: '应付节点',
         issued: '开具日期',
         hint: '草案仅供协商，不构成法律意见。发送前请确认固定价格。',
-        acceptHint: '接受后会记入本浏览器，并打开对应客户状态页。',
+        acceptHint: '请键入姓名以在本浏览器记录接受，随后打开对应客户状态页。',
+        signTitle: '键入接受',
+        signLabel: '键入你的姓名',
+        signHelp:
+          '仅在本设备记录参考范围的接受 — 不是第三方电子签章产品，也不构成正式湿签。',
+        signedBy: '签署人',
+        providerSign: '服务方',
+        clientSign: '客户',
       }
 
+  const canAccept = sanitizeSignerName(signerName).length >= 2
+
   function handleAccept() {
-    if (model.quoteRef) acceptQuote(model.quoteRef)
+    const name = sanitizeSignerName(signerName)
+    if (!name) return
+    if (model.quoteRef) {
+      acceptQuote(model.quoteRef, {
+        signerName: name,
+        clientName: model.clientName,
+        fee: model.fee,
+        deposit: model.deposit,
+      })
+    }
     setAccepted(true)
     try {
       window.location.assign(portalUrl)
@@ -273,7 +333,7 @@ export default function Proposal({
                   <tr>
                     <th>{t.client}</th>
                     <td>
-                      <strong>{model.client}</strong> — CLIENT_CONTACT
+                      <strong>{model.client}</strong>
                     </td>
                   </tr>
                 </tbody>
@@ -330,25 +390,33 @@ export default function Proposal({
                   <tr>
                     <th>{t.kickoff}</th>
                     <td>
-                      <strong>DATE</strong>
+                      <strong>
+                        {formatDate(model.schedule.kickoff, lang)}
+                      </strong>
                     </td>
                   </tr>
                   <tr>
                     <th>{t.preview}</th>
                     <td>
-                      <strong>DATE</strong>
+                      <strong>
+                        {formatDate(model.schedule.preview, lang)}
+                      </strong>
                     </td>
                   </tr>
                   <tr>
                     <th>{t.revise}</th>
                     <td>
-                      <strong>DATE</strong>
+                      <strong>
+                        {formatDate(model.schedule.revisions, lang)}
+                      </strong>
                     </td>
                   </tr>
                   <tr>
                     <th>{t.final}</th>
                     <td>
-                      <strong>DATE</strong>
+                      <strong>
+                        {formatDate(model.schedule.delivery, lang)}
+                      </strong>
                     </td>
                   </tr>
                 </tbody>
@@ -375,9 +443,7 @@ export default function Proposal({
                   </tr>
                   <tr>
                     <th>{t.method}</th>
-                    <td>
-                      <strong>METHOD</strong>
-                    </td>
+                    <td>{model.payment}</td>
                   </tr>
                 </tbody>
               </table>
@@ -401,14 +467,22 @@ export default function Proposal({
 
               <div className="proposal-sign">
                 <div>
-                  {en
-                    ? 'Provider — name / signature / date'
-                    : '服务方 — 姓名 / 签章 / 日期'}
+                  <strong>{t.providerSign}</strong>
+                  <span>{PROVIDER_SIGN}</span>
+                  <span>{formatDate(model.schedule.kickoff, lang)}</span>
                 </div>
                 <div>
-                  {en
-                    ? 'Client — name / signature / date'
-                    : '客户 — 姓名 / 签章 / 日期'}
+                  <strong>{t.clientSign}</strong>
+                  <span>
+                    {accepted
+                      ? sanitizeSignerName(signerName) || model.client
+                      : en
+                        ? 'Type name below to accept'
+                        : '在下方键入姓名以接受'}
+                  </span>
+                  <span>
+                    {accepted ? formatDate(model.schedule.kickoff, lang) : '—'}
+                  </span>
                 </div>
               </div>
             </>
@@ -423,8 +497,6 @@ export default function Proposal({
                     <th>{t.billTo}</th>
                     <td>
                       <strong>{model.client}</strong>
-                      <br />
-                      CLIENT_CONTACT
                     </td>
                   </tr>
                   <tr>
@@ -461,9 +533,7 @@ export default function Proposal({
                   </tr>
                   <tr>
                     <th>{t.method}</th>
-                    <td>
-                      <strong>METHOD</strong>
-                    </td>
+                    <td>{model.payment}</td>
                   </tr>
                 </tbody>
               </table>
@@ -477,13 +547,39 @@ export default function Proposal({
           <p className="proposal-hint">{t.hint}</p>
         </article>
 
+        <section
+          className="proposal-esign no-print"
+          aria-labelledby="proposal-esign-title"
+        >
+          <h2 id="proposal-esign-title">{t.signTitle}</h2>
+          <label className="proposal-esign-label" htmlFor="proposal-signer">
+            {t.signLabel}
+          </label>
+          <input
+            id="proposal-signer"
+            className="calc-input"
+            type="text"
+            maxLength={80}
+            autoComplete="name"
+            value={signerName}
+            disabled={accepted}
+            onChange={(e) => setSignerName(e.target.value)}
+          />
+          <p className="proposal-accept-hint">{t.signHelp}</p>
+          {accepted ? (
+            <p className="proposal-signed">
+              {t.signedBy} <strong>{sanitizeSignerName(signerName)}</strong>
+            </p>
+          ) : null}
+        </section>
+
         <p className="proposal-accept-hint no-print">{t.acceptHint}</p>
         <div className="portal-actions no-print">
           <button
             type="button"
             className="btn btn-primary"
             onClick={handleAccept}
-            disabled={accepted}
+            disabled={accepted || !canAccept}
           >
             {accepted ? t.accepted : t.accept}
           </button>

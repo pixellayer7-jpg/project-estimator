@@ -19,7 +19,11 @@ import {
   openSowPrintWindow,
 } from '../utils/sowGenerator'
 import { openDepositInvoiceWindow } from '../utils/invoiceGenerator'
-import { buildPortalQuoteUrl, buildProposalUrl } from '../utils/portalFromQuote'
+import {
+  buildPortalQuoteUrl,
+  buildProposalUrl,
+  buildQuoteSchedule,
+} from '../utils/portalFromQuote'
 import { LANDING_URL, EMAIL, ESTIMATOR_URL } from '../config/site'
 import {
   buildLandingContactUrl,
@@ -467,6 +471,7 @@ export default function Calculator({ lang = 'en', onHydratedLang }) {
       max,
       quoteRef,
       clientName,
+      dates: buildQuoteSchedule({ projectType, addOnIds }),
     })
     downloadSowMarkdown(md)
   }
@@ -481,6 +486,7 @@ export default function Calculator({ lang = 'en', onHydratedLang }) {
       max,
       quoteRef,
       clientName,
+      dates: buildQuoteSchedule({ projectType, addOnIds }),
     })
   }
 

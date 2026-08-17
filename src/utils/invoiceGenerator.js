@@ -1,3 +1,5 @@
+import { PAYMENT_METHOD } from '../config/site'
+
 /**
  * Deposit invoice draft from calculator quote state (print → PDF).
  * Midpoint of range used as suggested fee; 50% deposit.
@@ -122,7 +124,7 @@ export function buildDepositInvoiceHtml({
       <tr><th>${en ? 'Payment terms' : '付款条款'}</th><td>${en ? '50% deposit to kickoff · 50% on delivery' : '开工 50% 定金 · 交付 50% 尾款'}</td></tr>
       <tr class="total"><th>${en ? 'Deposit due' : '应付定金'}</th><td>$${deposit.toLocaleString()} USD</td></tr>
       <tr><th>${en ? 'Due on' : '应付节点'}</th><td>${en ? 'Kickoff / written acceptance' : '启动 / 书面确认时'}</td></tr>
-      <tr><th>${en ? 'Payment method' : '支付方式'}</th><td><strong>METHOD</strong></td></tr>
+      <tr><th>${en ? 'Payment method' : '支付方式'}</th><td>${PAYMENT_METHOD[en ? 'en' : 'zh']}</td></tr>
     </table>
 
     <div class="due">

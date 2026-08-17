@@ -17,6 +17,7 @@ describe('buildSowMarkdown', () => {
     expect(md).toContain('aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee')
     expect(md).toContain('Multilingual')
     expect(md).toContain('CLIENT_LEGAL_NAME')
+    expect(md).toContain('Bank transfer')
   })
 
   it('uses the provided client name', () => {
