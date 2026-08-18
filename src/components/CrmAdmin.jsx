@@ -13,6 +13,17 @@ import { indexLeadsByQuoteRef, leadCountForQuote } from '../utils/crmJoin'
 import { downloadCsv, downloadJson } from '../utils/exportCrm'
 import { buildPortalQuoteUrl, buildProposalUrl } from '../utils/portalFromQuote'
 import {
+  engagementStage,
+  getQuoteAcceptance,
+  listLocalEngagements,
+} from '../utils/portalAcceptStore'
+import { loadEstimatorForm, loadQuoteRef } from '../utils/storage'
+import {
+  buildEngagementRecord,
+  downloadEngagementJson,
+  downloadEngagementMarkdown,
+} from '../utils/engagementRecord'
+import {
   demoStatsFromState,
   loadCrmDemoState,
   patchDemoLeadStatus,
@@ -91,6 +102,15 @@ export default function CrmAdmin({ lang }) {
         openCalc: 'Open',
         openPortalRow: 'Portal',
         openProposalRow: 'Proposal',
+        localTitle: 'This browser',
+        localHint:
+          'Signed proposals from this device appear here — no API required. Download the engagement record for OPT / interview evidence.',
+        localEmpty:
+          'No signed quote in this browser yet. Open a proposal and type a name to accept.',
+        localStage: 'Stage',
+        localSigner: 'Signed as',
+        downloadJson: 'JSON',
+        downloadMd: 'Markdown',
       }
     : {
         title: 'CRM 管理',
@@ -127,6 +147,14 @@ export default function CrmAdmin({ lang }) {
         openCalc: '打开',
         openPortalRow: '状态页',
         openProposalRow: '提案',
+        localTitle: '本浏览器',
+        localHint:
+          '本机已签署的提案会出现在这里 — 无需 API。可下载合作记录，用于 OPT / 面试证据。',
+        localEmpty: '本浏览器还没有已签署报价。请打开提案并键入姓名接受。',
+        localStage: '阶段',
+        localSigner: '签署姓名',
+        downloadJson: 'JSON',
+        downloadMd: 'Markdown',
       }
 
   const leadsByRef = useMemo(() => indexLeadsByQuoteRef(leads), [leads])
@@ -228,6 +256,34 @@ export default function CrmAdmin({ lang }) {
       : error
 
   const calcSiteBase = ESTIMATOR_URL
+  const localQuoteRef = loadQuoteRef()
+  const localForm = loadEstimatorForm()
+  const localAccept = localQuoteRef ? getQuoteAcceptance(localQuoteRef) : null
+  const localList = listLocalEngagements()
+  const localStage = engagementStage(localAccept)
+  const STAGE_LABEL = isEn
+    ? {
+        draft: 'Draft',
+        signed: 'Signed',
+        deposit: 'Deposit marked',
+        kickoff: 'Kickoff complete',
+      }
+    : {
+        draft: '草案',
+        signed: '已签署',
+        deposit: '已标记定金',
+        kickoff: '开工完成',
+      }
+
+  function currentEngagementRecord() {
+    return buildEngagementRecord({
+      quoteRef: localQuoteRef,
+      projectType: localForm?.projectType || 'landing',
+      addOnIds: localForm?.addOnIds || [],
+      extraSections: localForm?.extraSections || '0',
+      clientName: localForm?.clientName || localAccept?.clientName || '',
+    })
+  }
 
   return (
     <section className="crm-admin no-print" aria-labelledby="crm-title">
@@ -268,6 +324,99 @@ export default function CrmAdmin({ lang }) {
             {t.openPortal}
           </a>
         </div>
+
+        <section
+          className="crm-local-engagement"
+          aria-labelledby="crm-local-title"
+        >
+          <h3 id="crm-local-title">{t.localTitle}</h3>
+          <p>{t.localHint}</p>
+          {localQuoteRef ? (
+            <>
+              <dl className="crm-local-meta">
+                <div>
+                  <dt>Quote</dt>
+                  <dd>
+                    <code>{localQuoteRef}</code>
+                  </dd>
+                </div>
+                <div>
+                  <dt>{t.localStage}</dt>
+                  <dd>{STAGE_LABEL[localStage] || localStage}</dd>
+                </div>
+                {localAccept?.signerName ? (
+                  <div>
+                    <dt>{t.localSigner}</dt>
+                    <dd>{localAccept.signerName}</dd>
+                  </div>
+                ) : null}
+              </dl>
+              <div className="crm-local-actions">
+                <a
+                  className="btn btn-outline"
+                  href={buildProposalUrl({
+                    base: ESTIMATOR_URL,
+                    tab: 'sow',
+                    projectType: localForm?.projectType || 'landing',
+                    addOnIds: localForm?.addOnIds || [],
+                    extraSections: localForm?.extraSections || '0',
+                    quoteRef: localQuoteRef,
+                    clientName: localForm?.clientName,
+                  })}
+                >
+                  {t.openProposalRow}
+                </a>
+                <a
+                  className="btn btn-outline"
+                  href={buildPortalQuoteUrl({
+                    base: ESTIMATOR_URL,
+                    projectType: localForm?.projectType || 'landing',
+                    addOnIds: localForm?.addOnIds || [],
+                    extraSections: localForm?.extraSections || '0',
+                    quoteRef: localQuoteRef,
+                    clientName: localForm?.clientName,
+                  })}
+                >
+                  {t.openPortalRow}
+                </a>
+                {localAccept?.acceptedAt ? (
+                  <>
+                    <button
+                      type="button"
+                      className="btn btn-outline"
+                      onClick={() =>
+                        downloadEngagementJson(currentEngagementRecord())
+                      }
+                    >
+                      {t.downloadJson}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-outline"
+                      onClick={() =>
+                        downloadEngagementMarkdown(
+                          currentEngagementRecord(),
+                          isEn ? 'en' : 'zh'
+                        )
+                      }
+                    >
+                      {t.downloadMd}
+                    </button>
+                  </>
+                ) : null}
+              </div>
+              {localList.length > 1 ? (
+                <p className="crm-local-count">
+                  {isEn
+                    ? `${localList.length} signed quotes in this browser`
+                    : `本浏览器共 ${localList.length} 条已签署报价`}
+                </p>
+              ) : null}
+            </>
+          ) : (
+            <p>{t.localEmpty}</p>
+          )}
+        </section>
 
         {!useDemo && apiBase ? (
           <form className="crm-admin-token-form" onSubmit={handleSaveToken}>

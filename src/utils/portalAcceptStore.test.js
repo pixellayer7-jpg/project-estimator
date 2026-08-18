@@ -7,6 +7,7 @@ import {
   isDepositSent,
   isKickoffComplete,
   isQuoteAccepted,
+  listLocalEngagements,
   markDepositSent,
   setKickoffItem,
 } from './portalAcceptStore'
@@ -43,5 +44,7 @@ describe('portalAcceptStore', () => {
     expect(setKickoffItem(id, 'access', true)).toBe(true)
     markDepositSent(id)
     expect(isKickoffComplete(id)).toBe(true)
+    expect(getQuoteAcceptance(id).kickoffCompletedAt).toBeTruthy()
+    expect(listLocalEngagements()[0].stage).toBe('kickoff')
   })
 })

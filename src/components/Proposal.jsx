@@ -14,6 +14,11 @@ import {
   sanitizeSignerName,
 } from '../utils/portalAcceptStore'
 import {
+  buildEngagementRecord,
+  downloadEngagementJson,
+  downloadEngagementMarkdown,
+} from '../utils/engagementRecord'
+import {
   buildPortalQuoteUrl,
   buildProposalUrl,
   buildQuoteSchedule,
@@ -180,6 +185,8 @@ export default function Proposal({
         signHelp:
           'Records indicative-scope acceptance on this device only — not a third-party e-sign product or a court-ready wet signature.',
         signedBy: 'Signed by',
+        downloadJson: 'Download engagement JSON',
+        downloadMd: 'Download engagement Markdown',
         providerSign: 'Provider',
         clientSign: 'Client',
       }
@@ -233,6 +240,8 @@ export default function Proposal({
         signHelp:
           '仅在本设备记录参考范围的接受 — 不是第三方电子签章产品，也不构成正式湿签。',
         signedBy: '签署人',
+        downloadJson: '下载合作记录 JSON',
+        downloadMd: '下载合作记录 Markdown',
         providerSign: '服务方',
         clientSign: '客户',
       }
@@ -570,6 +579,45 @@ export default function Proposal({
             <p className="proposal-signed">
               {t.signedBy} <strong>{sanitizeSignerName(signerName)}</strong>
             </p>
+          ) : null}
+          {accepted ? (
+            <div className="portal-kickoff-downloads">
+              <button
+                type="button"
+                className="btn-ghost"
+                onClick={() =>
+                  downloadEngagementJson(
+                    buildEngagementRecord({
+                      quoteRef: model.quoteRef,
+                      projectType: model.projectType,
+                      addOnIds: model.addOnIds,
+                      extraSections: model.extraSections,
+                      clientName: model.clientName,
+                    })
+                  )
+                }
+              >
+                {t.downloadJson}
+              </button>
+              <button
+                type="button"
+                className="btn-ghost"
+                onClick={() =>
+                  downloadEngagementMarkdown(
+                    buildEngagementRecord({
+                      quoteRef: model.quoteRef,
+                      projectType: model.projectType,
+                      addOnIds: model.addOnIds,
+                      extraSections: model.extraSections,
+                      clientName: model.clientName,
+                    }),
+                    lang
+                  )
+                }
+              >
+                {t.downloadMd}
+              </button>
+            </div>
           ) : null}
         </section>
 

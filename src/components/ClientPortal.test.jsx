@@ -74,6 +74,18 @@ describe('ClientPortal', () => {
       screen.getByRole('button', { name: /Deposit marked sent/i })
     ).toBeDisabled()
     expect(screen.getByLabelText(/Brand assets/i)).toBeInTheDocument()
+    await user.click(screen.getByLabelText(/Brand assets/i))
+    await user.click(screen.getByLabelText(/Final copy/i))
+    await user.click(screen.getByLabelText(/Domain, DNS/i))
+    expect(screen.getByText(/Kickoff complete/i)).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        /Frontend build is in progress against the signed scope/i
+      )
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /Download engagement JSON/i })
+    ).toBeInTheDocument()
   })
 })
 

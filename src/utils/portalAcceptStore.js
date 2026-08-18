@@ -46,6 +46,7 @@ export function getQuoteAcceptance(quoteRef) {
     fee: Number.isFinite(Number(row.fee)) ? Number(row.fee) : null,
     deposit: Number.isFinite(Number(row.deposit)) ? Number(row.deposit) : null,
     depositMarkedAt: row.depositMarkedAt || null,
+    kickoffCompletedAt: row.kickoffCompletedAt || null,
     kickoff: normalizeKickoff(row.kickoff),
   }
 }
@@ -97,10 +98,10 @@ export function markDepositSent(quoteRef, now = new Date()) {
   const map = readAll()
   const prev = map[quoteRef]
   if (!prev?.acceptedAt) return false
-  map[quoteRef] = {
+  map[quoteRef] = stampKickoff({
     ...prev,
     depositMarkedAt: prev.depositMarkedAt || now.toISOString(),
-  }
+  })
   writeAll(map)
   return true
 }
@@ -110,13 +111,13 @@ export function setKickoffItem(quoteRef, key, value) {
   const map = readAll()
   const prev = map[quoteRef]
   if (!prev?.acceptedAt) return false
-  map[quoteRef] = {
+  map[quoteRef] = stampKickoff({
     ...prev,
     kickoff: {
       ...normalizeKickoff(prev.kickoff),
       [key]: Boolean(value),
     },
-  }
+  })
   writeAll(map)
   return true
 }
@@ -125,6 +126,52 @@ export function isKickoffComplete(quoteRef) {
   const row = getQuoteAcceptance(quoteRef)
   if (!row?.acceptedAt || !row.depositMarkedAt) return false
   return row.kickoff.assets && row.kickoff.copy && row.kickoff.access
+}
+
+export function engagementStage(row) {
+  if (!row?.acceptedAt) return 'draft'
+  const kickoff = normalizeKickoff(row.kickoff)
+  if (
+    row.depositMarkedAt &&
+    (row.kickoffCompletedAt ||
+      (kickoff.assets && kickoff.copy && kickoff.access))
+  ) {
+    return 'kickoff'
+  }
+  if (row.depositMarkedAt) return 'deposit'
+  return 'signed'
+}
+
+export function listLocalEngagements() {
+  const map = readAll()
+  return Object.keys(map)
+    .map((quoteRef) => {
+      const row = getQuoteAcceptance(quoteRef)
+      if (!row?.acceptedAt) return null
+      return { quoteRef, ...row, stage: engagementStage(row) }
+    })
+    .filter(Boolean)
+    .sort((a, b) => String(b.acceptedAt).localeCompare(String(a.acceptedAt)))
+}
+
+function stampKickoff(row, now = new Date()) {
+  const kickoff = normalizeKickoff(row.kickoff)
+  const complete =
+    Boolean(row.acceptedAt) &&
+    Boolean(row.depositMarkedAt) &&
+    kickoff.assets &&
+    kickoff.copy &&
+    kickoff.access
+  if (complete) {
+    return {
+      ...row,
+      kickoff,
+      kickoffCompletedAt: row.kickoffCompletedAt || now.toISOString(),
+    }
+  }
+  const next = { ...row, kickoff }
+  delete next.kickoffCompletedAt
+  return next
 }
 
 export function clearQuoteAccept(quoteRef) {

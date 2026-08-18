@@ -36,3 +36,12 @@ function triggerDownload(filename, blob) {
   a.click()
   URL.revokeObjectURL(url)
 }
+
+export function downloadText(
+  filename,
+  content,
+  type = 'text/markdown;charset=utf-8'
+) {
+  const blob = new Blob([content], { type })
+  triggerDownload(filename, blob)
+}

@@ -474,3 +474,31 @@ export function withDepositMarked(project, now = new Date(), details = {}) {
     ],
   }
 }
+
+export function withKickoffComplete(project, now = new Date(), details = {}) {
+  const deposited = withDepositMarked(project, now, details)
+  const today = isoDate(now)
+  return {
+    ...deposited,
+    kickoffComplete: true,
+    nextAction: {
+      owner: { en: 'PixelLayer', zh: 'PixelLayer' },
+      due: isoDate(addUtcDays(now, 3)),
+      text: {
+        en: 'Kickoff checklist complete. Frontend build is in progress against the signed scope.',
+        zh: '开工清单已完成。前端开发已按签署范围进行中。',
+      },
+    },
+    updates: [
+      {
+        date: today,
+        author: deposited.signerName || 'Client',
+        body: {
+          en: 'Completed kickoff checklist (assets, copy, access). Build can proceed.',
+          zh: '已完成开工清单（素材、文案、权限）。开发可继续。',
+        },
+      },
+      ...(deposited.updates || []),
+    ],
+  }
+}

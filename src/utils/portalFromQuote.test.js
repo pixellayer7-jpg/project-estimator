@@ -6,6 +6,7 @@ import {
   buildQuoteSchedule,
   resolveQuoteInputFromLocation,
   withDepositMarked,
+  withKickoffComplete,
   withQuoteAcceptance,
 } from './portalFromQuote'
 import { calculateQuote } from '../data/pricing'
@@ -160,5 +161,19 @@ describe('withDepositMarked', () => {
     expect(next.depositSent).toBe(true)
     expect(next.signerName).toBe('Jamie Chen')
     expect(next.updates[0].body.en).toMatch(/deposit/i)
+  })
+})
+
+describe('withKickoffComplete', () => {
+  it('hands next action to PixelLayer', () => {
+    const project = buildPortalFromQuote({
+      projectType: 'landing',
+      quoteRef: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',
+      now: new Date('2026-08-17T12:00:00Z'),
+    })
+    const next = withKickoffComplete(project, new Date('2026-08-17T12:00:00Z'))
+    expect(next.kickoffComplete).toBe(true)
+    expect(next.nextAction.owner.en).toBe('PixelLayer')
+    expect(next.nextAction.text.en).toMatch(/Kickoff checklist complete/i)
   })
 })

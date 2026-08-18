@@ -7,6 +7,7 @@ import {
   buildPortalQuoteUrl,
   buildQuoteSchedule,
   withDepositMarked,
+  withKickoffComplete,
   withQuoteAcceptance,
 } from '../utils/portalFromQuote'
 import {
@@ -15,6 +16,11 @@ import {
   markDepositSent,
   setKickoffItem,
 } from '../utils/portalAcceptStore'
+import {
+  buildEngagementRecord,
+  downloadEngagementJson,
+  downloadEngagementMarkdown,
+} from '../utils/engagementRecord'
 import { projectTypes } from '../data/pricing'
 
 const STATUS_LABELS = {
@@ -67,11 +73,15 @@ export default function ClientPortal({ lang, project = portalDemo }) {
   )
   const [copyState, setCopyState] = useState('idle')
 
+  const kickoffDone =
+    depositSent && kickoff.assets && kickoff.copy && kickoff.access
+
   const live = useMemo(() => {
     if (project.source !== 'quote') return project
+    if (kickoffDone) return withKickoffComplete(project)
     if (depositSent) return withDepositMarked(project)
     return accepted ? withQuoteAcceptance(project) : project
-  }, [project, accepted, depositSent])
+  }, [project, accepted, depositSent, kickoffDone])
 
   const progress = calculatePortalProgress(live.milestones)
   const shareUrl = shareUrlFor(live, lang)
@@ -102,6 +112,9 @@ export default function ClientPortal({ lang, project = portalDemo }) {
         kickoffCopy: 'Final copy (EN / 中文)',
         kickoffAccess: 'Domain, DNS, or hosting access',
         signed: 'Signed in this browser',
+        downloadJson: 'Download engagement JSON',
+        downloadMd: 'Download engagement Markdown',
+        kickoffDone: 'Kickoff complete',
         print: 'Print status page',
         copy: 'Copy share link',
         copied: 'Link copied',
@@ -136,6 +149,9 @@ export default function ClientPortal({ lang, project = portalDemo }) {
         kickoffCopy: '定稿文案（中/英）',
         kickoffAccess: '域名、DNS 或托管权限',
         signed: '已在本浏览器签署',
+        downloadJson: '下载合作记录 JSON',
+        downloadMd: '下载合作记录 Markdown',
+        kickoffDone: '开工清单已完成',
         print: '打印状态页',
         copy: '复制分享链接',
         copied: '链接已复制',
@@ -196,6 +212,33 @@ export default function ClientPortal({ lang, project = portalDemo }) {
     const next = !kickoff[key]
     if (quoteRef) setKickoffItem(quoteRef, key, next)
     setKickoff((prev) => ({ ...prev, [key]: next }))
+  }
+
+  function handleDownloadJson() {
+    const payload = live.quotePayload || {}
+    downloadEngagementJson(
+      buildEngagementRecord({
+        quoteRef: payload.quoteRef,
+        projectType: payload.projectTypeId,
+        addOnIds: payload.addOnIds,
+        extraSections: payload.extraSections,
+        clientName: payload.clientName,
+      })
+    )
+  }
+
+  function handleDownloadMarkdown() {
+    const payload = live.quotePayload || {}
+    downloadEngagementMarkdown(
+      buildEngagementRecord({
+        quoteRef: payload.quoteRef,
+        projectType: payload.projectTypeId,
+        addOnIds: payload.addOnIds,
+        extraSections: payload.extraSections,
+        clientName: payload.clientName,
+      }),
+      lang
+    )
   }
 
   async function handleCopyShare() {
@@ -373,6 +416,25 @@ export default function ClientPortal({ lang, project = portalDemo }) {
                     </li>
                   ))}
                 </ul>
+                {kickoffDone ? (
+                  <p className="portal-signed">{t.kickoffDone}</p>
+                ) : null}
+                <div className="portal-kickoff-downloads">
+                  <button
+                    type="button"
+                    className="btn-ghost"
+                    onClick={handleDownloadJson}
+                  >
+                    {t.downloadJson}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-ghost"
+                    onClick={handleDownloadMarkdown}
+                  >
+                    {t.downloadMd}
+                  </button>
+                </div>
               </section>
             ) : null}
 
