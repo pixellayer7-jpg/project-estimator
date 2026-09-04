@@ -9,6 +9,11 @@ export const ESTIMATOR_URL =
 export const GITHUB_PROFILE = 'https://github.com/pixellayer7-jpg'
 export const EMAIL = 'pixellayer7@gmail.com'
 
+/** Rongen church static bilingual preview (GitHub Pages) */
+export const RONGEN_PREVIEW_URL =
+  import.meta.env.VITE_RONGEN_PREVIEW_URL ||
+  'https://pixellayer7-jpg.github.io/rongen-church/'
+
 export const PAYMENT_METHOD = {
   en: 'Bank transfer / Zelle / agreed method (confirmed by email)',
   zh: '银行转账 / Zelle / 邮件确认的约定方式',

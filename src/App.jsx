@@ -9,7 +9,7 @@ import {
 import Calculator from './components/Calculator'
 import PricingOverview from './components/PricingOverview'
 import EcosystemStrip from './components/EcosystemStrip'
-import { GITHUB_PROFILE, LANDING_URL, EMAIL } from './config/site'
+import { GITHUB_PROFILE, LANDING_URL, EMAIL, RONGEN_PREVIEW_URL } from './config/site'
 import { portalDemo } from './data/clientPortalDemo'
 import {
   buildPortalFromQuote,
@@ -252,6 +252,14 @@ export default function App() {
             {' · '}
             <a href={LANDING_URL} target="_blank" rel="noopener noreferrer">
               {lang === 'en' ? 'Marketing site' : '营销主站'}
+            </a>
+            {' · '}
+            <a
+              href={RONGEN_PREVIEW_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {lang === 'en' ? 'Rongen preview' : '荣恩堂预览'}
             </a>
             {' · '}
             <a

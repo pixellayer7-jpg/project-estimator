@@ -1,9 +1,17 @@
-import { ESTIMATOR_URL, GITHUB_PROFILE, LANDING_URL } from '../config/site'
+import {
+  ESTIMATOR_URL,
+  GITHUB_PROFILE,
+  LANDING_URL,
+  RONGEN_PREVIEW_URL,
+} from '../config/site'
 
 export default function EcosystemStrip({ lang }) {
   const en = lang === 'en'
   const apiRepo = `${GITHUB_PROFILE}/estimator-api`
   const calcRepo = `${GITHUB_PROFILE}/project-estimator`
+  const calcBase = ESTIMATOR_URL.replace(/\/?$/, '/')
+  const rongenEn = `${RONGEN_PREVIEW_URL.replace(/\/?$/, '/')}en/`
+  const walkthrough = `${LANDING_URL.replace(/\/?$/, '/')}#walkthrough`
 
   return (
     <aside
@@ -38,20 +46,38 @@ export default function EcosystemStrip({ lang }) {
         <span className="ecosystem-sep" aria-hidden="true">
           ·
         </span>
-        <a href={`${ESTIMATOR_URL.replace(/\/?$/, '/')}?admin=1`}>
+        <a href={`${calcBase}?admin=1`}>
           {en ? 'CRM admin' : 'CRM 管理'}
         </a>
         <span className="ecosystem-sep" aria-hidden="true">
           ·
         </span>
-        <a href={`${ESTIMATOR_URL.replace(/\/?$/, '/')}?portal=demo`}>
+        <a href={`${calcBase}?portal=demo`}>
           {en ? 'Client portal' : '客户状态页'}
         </a>
         <span className="ecosystem-sep" aria-hidden="true">
           ·
         </span>
-        <a href={`${ESTIMATOR_URL.replace(/\/?$/, '/')}?proposal=sow`}>
+        <a href={`${calcBase}?proposal=sow`}>
           {en ? 'Proposal' : '提案'}
+        </a>
+        <span className="ecosystem-sep" aria-hidden="true">
+          ·
+        </span>
+        <a href={RONGEN_PREVIEW_URL} target="_blank" rel="noopener noreferrer">
+          {en ? 'Rongen (client)' : '荣恩堂（客户）'}
+        </a>
+        <span className="ecosystem-sep" aria-hidden="true">
+          ·
+        </span>
+        <a href={rongenEn} target="_blank" rel="noopener noreferrer">
+          {en ? 'Rongen EN' : '荣恩堂 EN'}
+        </a>
+        <span className="ecosystem-sep" aria-hidden="true">
+          ·
+        </span>
+        <a href={walkthrough} target="_blank" rel="noopener noreferrer">
+          {en ? '5-min walkthrough' : '5 分钟走查'}
         </a>
       </div>
     </aside>

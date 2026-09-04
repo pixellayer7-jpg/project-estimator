@@ -44,6 +44,22 @@ describe('App', () => {
     ).toHaveAttribute('href', 'https://pixellayer7-jpg.github.io/1/')
   })
 
+  it('ecosystem strip links to Rongen client preview', () => {
+    render(<App />)
+    expect(
+      screen.getByRole('link', { name: /^Rongen \(client\)$/ })
+    ).toHaveAttribute(
+      'href',
+      'https://pixellayer7-jpg.github.io/rongen-church/'
+    )
+    expect(
+      screen.getByRole('link', { name: /^Rongen EN$/ })
+    ).toHaveAttribute(
+      'href',
+      'https://pixellayer7-jpg.github.io/rongen-church/en/'
+    )
+  })
+
   it('routes ?portal=demo to the client status portal', async () => {
     window.history.replaceState({}, '', '/?portal=demo')
     render(<App />)
