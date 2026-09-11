@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="PixelLayer project quote calculator">
+  <rect width="1200" height="630" fill="#0f172a"/>
+  <rect x="0" y="0" width="1200" height="8" fill="#0ea5e9"/>
+  <rect x="0" y="622" width="1200" height="8" fill="#334155"/>
+  <text x="80" y="180" fill="#f1f5f9" font-family="Segoe UI, system-ui, sans-serif" font-size="52" font-weight="700">PixelLayer L.L.C</text>
+  <text x="80" y="250" fill="#94a3b8" font-family="Segoe UI, system-ui, sans-serif" font-size="34">Project Quote Calculator</text>
+  <text x="80" y="320" fill="#0ea5e9" font-family="Segoe UI, system-ui, sans-serif" font-size="28">EN / Chinese · Proposal · CRM · Client portal</text>
+  <text x="80" y="390" fill="#cbd5e1" font-family="Segoe UI, system-ui, sans-serif" font-size="24">Written estimates · Zero-config interview demos</text>
+  <text x="80" y="520" fill="#64748b" font-family="Segoe UI, system-ui, sans-serif" font-size="22">pixellayer7-jpg.github.io/project-estimator</text>
+</svg>

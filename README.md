@@ -12,6 +12,8 @@ A small React app that gives clients an **estimated price range** for common pro
 
 **Live demo:** [https://pixellayer7-jpg.github.io/project-estimator/](https://pixellayer7-jpg.github.io/project-estimator/) · **Marketing site:** [https://pixellayer7-jpg.github.io/1/](https://pixellayer7-jpg.github.io/1/) · **Client preview:** [Rongen Church](https://pixellayer7-jpg.github.io/rongen-church/)
 
+Social share: **`og-image.svg`** (1200×630) injected at build via `VITE_SITE_URL` (Pages CI sets it).
+
 Static **`<head>`** tweaks: `referrer` policy for outbound privacy, and **preconnect** to Google Fonts (used in `index.css`).
 
 **`public/robots.txt`** — copied to site root on build so crawlers can index the deployed calculator (when hosted at a public URL).
