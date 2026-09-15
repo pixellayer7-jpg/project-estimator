@@ -37,6 +37,7 @@ Static **`<head>`** tweaks: `referrer` policy for outbound privacy, and **precon
 - **Engagement record** — Download JSON or Markdown of the signed quote, deposit mark, and kickoff checklist (OPT / interview evidence). CRM admin (`?admin=1`) shows **This browser** status for the current quote.
 - **Client status portal** — [`?portal=demo`](https://pixellayer7-jpg.github.io/project-estimator/?portal=demo) is a static sample. **Preview client portal** on the calculator opens [`?portal=quote`](https://pixellayer7-jpg.github.io/project-estimator/?portal=quote) with the **same price, scope, and quote ID**. Clients can **Accept this scope** (saved in this browser). Portal artifacts open the in-app proposal. No login or API secrets.
 - **Client site link** — Ecosystem strip + footer link to the live Rongen Church bilingual preview (zh / EN) and the landing `#walkthrough`.
+- **In-app changelog** — Bilingual release timeline at [`#changelog`](https://pixellayer7-jpg.github.io/project-estimator/#changelog).
 - **Validation** — Extra sections are clamped to 0–20 in logic, on blur in the UI, and in quote/summary math.
 - **Header** — Link to this repository on GitHub.
 - **Landmarks** — `banner` / `contentinfo` roles for assistive tech; Twitter Card meta for sharing.

@@ -9,6 +9,7 @@ import {
 import Calculator from './components/Calculator'
 import PricingOverview from './components/PricingOverview'
 import EcosystemStrip from './components/EcosystemStrip'
+import Changelog from './components/Changelog'
 import { GITHUB_PROFILE, LANDING_URL, EMAIL, RONGEN_PREVIEW_URL } from './config/site'
 import { portalDemo } from './data/clientPortalDemo'
 import {
@@ -233,6 +234,7 @@ export default function App() {
             >
               <ContactForm lang={lang} />
             </Suspense>
+            <Changelog lang={lang} />
           </>
         )}
       </main>
@@ -254,6 +256,14 @@ export default function App() {
               {lang === 'en' ? 'Marketing site' : '营销主站'}
             </a>
             {' · '}
+            {!showAdmin && !showPortal && !showProposal ? (
+              <>
+                <a href="#changelog">
+                  {lang === 'en' ? 'Changelog' : '更新日志'}
+                </a>
+                {' · '}
+              </>
+            ) : null}
             <a
               href={RONGEN_PREVIEW_URL}
               target="_blank"

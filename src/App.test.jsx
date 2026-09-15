@@ -60,6 +60,19 @@ describe('App', () => {
     )
   })
 
+  it('renders calculator changelog with latest release', () => {
+    render(<App />)
+    expect(
+      screen.getByRole('heading', { name: /^Changelog$/ })
+    ).toBeInTheDocument()
+    expect(screen.getByText(/^v2\.7\.3$/)).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', {
+        name: /In-app changelog for the quote calculator/,
+      })
+    ).toBeInTheDocument()
+  })
+
   it('routes ?portal=demo to the client status portal', async () => {
     window.history.replaceState({}, '', '/?portal=demo')
     render(<App />)

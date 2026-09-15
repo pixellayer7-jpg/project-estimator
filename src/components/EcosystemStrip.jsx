@@ -79,6 +79,10 @@ export default function EcosystemStrip({ lang }) {
         <a href={walkthrough} target="_blank" rel="noopener noreferrer">
           {en ? '5-min walkthrough' : '5 分钟走查'}
         </a>
+        <span className="ecosystem-sep" aria-hidden="true">
+          ·
+        </span>
+        <a href="#changelog">{en ? 'Changelog' : '更新日志'}</a>
       </div>
     </aside>
   )
