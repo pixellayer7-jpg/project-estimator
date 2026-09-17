@@ -8,8 +8,8 @@ export default function Changelog({ lang }) {
     ? 'How this quote calculator evolved — proposal, portal, CRM, and share links.'
     : '本报价计算器如何演进 — 提案、门户、CRM 与分享链接。'
   const tip = en
-    ? 'Interviewing? Start on the marketing walkthrough, then open recent releases here.'
-    : '面试走查？先去主站引导路径，再回来看这里的近期版本。'
+    ? 'Interviewing? Start on the marketing walkthrough (?section=walkthrough), then open recent releases here.'
+    : '面试走查？先去主站引导路径（?section=walkthrough），再回来看这里的近期版本。'
   const tipCta = en ? 'Open 5-min walkthrough' : '打开 5 分钟走查'
   const apiTip = en ? 'API curl demo' : 'API curl 演示'
   const reposNote = en
@@ -24,7 +24,7 @@ export default function Changelog({ lang }) {
         <p className="changelog-tip">
           {tip}{' '}
           <a
-            href={`${LANDING_URL.replace(/\/?$/, '/')}#walkthrough`}
+            href={`${LANDING_URL.replace(/\/?$/, '/')}?section=walkthrough`}
             target="_blank"
             rel="noopener noreferrer"
           >

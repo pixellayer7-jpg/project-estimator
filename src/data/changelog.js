@@ -1,8 +1,50 @@
-/**
+﻿/**
  * Calculator-focused release notes (milestone-level).
- * Keep in sync with notable v2.x ships shown on the marketing changelog.
+ * Keep in sync with notable stack ships shown on the marketing changelog.
  */
 export const changelogEntries = [
+  {
+    version: '2.7.4',
+    date: '2026-09-17',
+    titleEn: 'Changelog sync — API OpenAPI + Rongen docs',
+    titleZh: '更新日志同步 — API OpenAPI + 荣恩堂文档',
+    highlightsEn: [
+      'Notes stack releases API v1.1.2 (OpenAPI examples) and Rongen v1.2.4 (print + og:image)',
+      'Tips still point to landing ?section=walkthrough and API demo:curl',
+    ],
+    highlightsZh: [
+      '同步记录 API v1.1.2（OpenAPI 示例）与荣恩堂 v1.2.4（打印 + og:image）',
+      '仍引导主站 ?section=walkthrough 与 API demo:curl',
+    ],
+  },
+  {
+    version: '1.1.2',
+    date: '2026-09-16',
+    titleEn: 'Related: API OpenAPI with request examples',
+    titleZh: '相关：API OpenAPI 请求示例',
+    highlightsEn: [
+      'estimator-api /openapi.json adds schemas, examples, and Bearer security',
+      'npm run demo:curl still covers the 5-minute CRM path',
+    ],
+    highlightsZh: [
+      'estimator-api /openapi.json 含 schemas、示例与 Bearer',
+      'npm run demo:curl 仍覆盖 5 分钟 CRM 路径',
+    ],
+  },
+  {
+    version: '1.2.4',
+    date: '2026-09-16',
+    titleEn: 'Related: Rongen print + og:image docs',
+    titleZh: '相关：荣恩堂打印与 og:image 文档',
+    highlightsEn: [
+      'English README documents print-for-pastor-review and social og-image',
+      'Live preview: pixellayer7-jpg.github.io/rongen-church/',
+    ],
+    highlightsZh: [
+      '英文 README 写明打印审阅与社交 og:image',
+      '在线预览：pixellayer7-jpg.github.io/rongen-church/',
+    ],
+  },
   {
     version: '2.7.3',
     date: '2026-09-15',
