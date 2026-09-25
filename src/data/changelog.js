@@ -4,6 +4,20 @@
  */
 export const changelogEntries = [
   {
+    version: '2.7.5',
+    date: '2026-09-25',
+    titleEn: 'Crawlable ?section= deep links',
+    titleZh: '可收录的 ?section= 深链',
+    highlightsEn: [
+      '?section=changelog|contact|calc|pricing scrolls to that block (hash still works)',
+      'sitemap.xml lists section URLs; footer and ecosystem prefer ?section=changelog',
+    ],
+    highlightsZh: [
+      '?section=changelog|contact|calc|pricing 滚到对应区块（hash 仍可用）',
+      'sitemap.xml 列出 section URL；页脚与产品链优先 ?section=changelog',
+    ],
+  },
+  {
     version: '2.7.4',
     date: '2026-09-17',
     titleEn: 'Changelog sync — API OpenAPI + Rongen docs',

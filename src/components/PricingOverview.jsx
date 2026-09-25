@@ -10,7 +10,11 @@ export default function PricingOverview({ lang }) {
   const landingPricing = `${LANDING_URL.replace(/\/?$/, '/')}#pricing`
 
   return (
-    <section className="pricing-overview no-print" aria-label={title}>
+    <section
+      className="pricing-overview no-print"
+      id="pricing"
+      aria-label={title}
+    >
       <div className="container">
         <h2 className="pricing-overview-title">{title}</h2>
         <p className="pricing-overview-hint">

@@ -16,7 +16,7 @@ Social share: **`og-image.svg`** (1200×630) injected at build via `VITE_SITE_UR
 
 Static **`<head>`** tweaks: `referrer` policy for outbound privacy, and **preconnect** to Google Fonts (used in `index.css`).
 
-**`public/robots.txt`** — copied to site root on build so crawlers can index the deployed calculator (when hosted at a public URL).
+**`public/robots.txt`** — Allow + Sitemap; notes crawlable `?section=` deep links. **`public/sitemap.xml`** lists home, lang variants, and `?section=changelog|contact|calc|pricing`.
 
 - **EN / 中文** — Language toggle in the header (choice is saved in `localStorage`).
 - **Pricing overview** — Tier cards at top of page; landing pricing links use `?type=landing|website|dashboard&lang=`
@@ -37,7 +37,7 @@ Static **`<head>`** tweaks: `referrer` policy for outbound privacy, and **precon
 - **Engagement record** — Download JSON or Markdown of the signed quote, deposit mark, and kickoff checklist (OPT / interview evidence). CRM admin (`?admin=1`) shows **This browser** status for the current quote.
 - **Client status portal** — [`?portal=demo`](https://pixellayer7-jpg.github.io/project-estimator/?portal=demo) is a static sample. **Preview client portal** on the calculator opens [`?portal=quote`](https://pixellayer7-jpg.github.io/project-estimator/?portal=quote) with the **same price, scope, and quote ID**. Clients can **Accept this scope** (saved in this browser). Portal artifacts open the in-app proposal. No login or API secrets.
 - **Client site link** — Ecosystem strip + footer link to the live Rongen Church bilingual preview (zh / EN) and the landing `#walkthrough`.
-- **In-app changelog** — Bilingual release timeline at [`#changelog`](https://pixellayer7-jpg.github.io/project-estimator/#changelog).
+- **In-app changelog** — Bilingual release timeline at [`?section=changelog`](https://pixellayer7-jpg.github.io/project-estimator/?section=changelog) (hash `#changelog` still works).
 - **Validation** — Extra sections are clamped to 0–20 in logic, on blur in the UI, and in quote/summary math.
 - **Header** — Link to this repository on GitHub.
 - **Landmarks** — `banner` / `contentinfo` roles for assistive tech; Twitter Card meta for sharing.

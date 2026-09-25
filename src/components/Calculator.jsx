@@ -658,7 +658,7 @@ export default function Calculator({ lang = 'en', onHydratedLang }) {
   const t = isEn(lang) ? STRINGS_EN : STRINGS_ZH
 
   return (
-    <section className="calc" aria-labelledby="calc-title">
+    <section id="calc" className="calc" aria-labelledby="calc-title">
       <div className="container">
         <h2 id="calc-title" className="section-title">
           {t.title}

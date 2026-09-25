@@ -46,9 +46,7 @@ export default function EcosystemStrip({ lang }) {
         <span className="ecosystem-sep" aria-hidden="true">
           ·
         </span>
-        <a href={`${calcBase}?admin=1`}>
-          {en ? 'CRM admin' : 'CRM 管理'}
-        </a>
+        <a href={`${calcBase}?admin=1`}>{en ? 'CRM admin' : 'CRM 管理'}</a>
         <span className="ecosystem-sep" aria-hidden="true">
           ·
         </span>
@@ -58,9 +56,7 @@ export default function EcosystemStrip({ lang }) {
         <span className="ecosystem-sep" aria-hidden="true">
           ·
         </span>
-        <a href={`${calcBase}?proposal=sow`}>
-          {en ? 'Proposal' : '提案'}
-        </a>
+        <a href={`${calcBase}?proposal=sow`}>{en ? 'Proposal' : '提案'}</a>
         <span className="ecosystem-sep" aria-hidden="true">
           ·
         </span>
@@ -82,7 +78,7 @@ export default function EcosystemStrip({ lang }) {
         <span className="ecosystem-sep" aria-hidden="true">
           ·
         </span>
-        <a href="#changelog">{en ? 'Changelog' : '更新日志'}</a>
+        <a href="?section=changelog">{en ? 'Changelog' : '更新日志'}</a>
       </div>
     </aside>
   )

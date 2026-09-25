@@ -52,9 +52,7 @@ describe('App', () => {
       'href',
       'https://pixellayer7-jpg.github.io/rongen-church/'
     )
-    expect(
-      screen.getByRole('link', { name: /^Rongen EN$/ })
-    ).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /^Rongen EN$/ })).toHaveAttribute(
       'href',
       'https://pixellayer7-jpg.github.io/rongen-church/en/'
     )
@@ -65,12 +63,23 @@ describe('App', () => {
     expect(
       screen.getByRole('heading', { name: /^Changelog$/ })
     ).toBeInTheDocument()
-    expect(screen.getByText(/^v2\.7\.4$/)).toBeInTheDocument()
+    expect(screen.getByText(/^v2\.7\.5$/)).toBeInTheDocument()
     expect(
       screen.getByRole('heading', {
-        name: /Changelog sync/,
+        name: /Crawlable \?section=/,
       })
     ).toBeInTheDocument()
+  })
+
+  it('scrolls to changelog when ?section=changelog', async () => {
+    window.history.replaceState({}, '', '/?section=changelog')
+    const scrollIntoView = vi.fn()
+    Element.prototype.scrollIntoView = scrollIntoView
+    render(<App />)
+    expect(document.getElementById('changelog')).toBeTruthy()
+    await waitFor(() => {
+      expect(scrollIntoView).toHaveBeenCalled()
+    })
   })
 
   it('routes ?portal=demo to the client status portal', async () => {

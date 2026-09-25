@@ -10,13 +10,19 @@ import Calculator from './components/Calculator'
 import PricingOverview from './components/PricingOverview'
 import EcosystemStrip from './components/EcosystemStrip'
 import Changelog from './components/Changelog'
-import { GITHUB_PROFILE, LANDING_URL, EMAIL, RONGEN_PREVIEW_URL } from './config/site'
+import {
+  GITHUB_PROFILE,
+  LANDING_URL,
+  EMAIL,
+  RONGEN_PREVIEW_URL,
+} from './config/site'
 import { portalDemo } from './data/clientPortalDemo'
 import {
   buildPortalFromQuote,
   resolveQuoteInputFromLocation,
 } from './utils/portalFromQuote'
 import { isQuoteAccepted } from './utils/portalAcceptStore'
+import { scrollToEstimatorSectionFromLocation } from './utils/estimatorSection'
 
 const ContactForm = lazy(() => import('./components/ContactForm'))
 const CrmAdmin = lazy(() => import('./components/CrmAdmin'))
@@ -118,6 +124,14 @@ export default function App() {
           : 'Project Quote Calculator — PixelLayer L.L.C'
     }
   }, [lang, showPortal, showProposal])
+
+  useEffect(() => {
+    if (showAdmin || showPortal || showProposal) return undefined
+    const t = window.setTimeout(() => {
+      scrollToEstimatorSectionFromLocation()
+    }, 0)
+    return () => window.clearTimeout(t)
+  }, [showAdmin, showPortal, showProposal])
 
   const handleHydratedLang = useCallback((next) => {
     if (next === 'en' || next === 'zh') setLang(next)
@@ -258,7 +272,7 @@ export default function App() {
             {' · '}
             {!showAdmin && !showPortal && !showProposal ? (
               <>
-                <a href="#changelog">
+                <a href="?section=changelog">
                   {lang === 'en' ? 'Changelog' : '更新日志'}
                 </a>
                 {' · '}

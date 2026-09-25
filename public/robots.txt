@@ -1,3 +1,8 @@
 # https://www.robotstxt.org/robotstxt.html
 User-agent: *
 Allow: /
+
+# Crawlable section deep links (?section=changelog|contact|calc|pricing)
+# See public/sitemap.xml
+
+Sitemap: https://pixellayer7-jpg.github.io/project-estimator/sitemap.xml
