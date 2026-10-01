@@ -1,7 +1,7 @@
 import js from '@eslint/js'
+import eslintReact from '@eslint-react/eslint-plugin'
 import eslintConfigPrettier from 'eslint-config-prettier'
 import globals from 'globals'
-import react from 'eslint-plugin-react'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 
@@ -12,10 +12,11 @@ export default [
     languageOptions: { globals: { ...globals.node } },
   },
   js.configs.recommended,
-  react.configs.flat.recommended,
   {
     files: ['**/*.{js,jsx}'],
+    ...eslintReact.configs.recommended,
     languageOptions: {
+      ...eslintReact.configs.recommended.languageOptions,
       globals: { ...globals.browser },
       parserOptions: {
         ecmaVersion: 'latest',
@@ -23,21 +24,33 @@ export default [
         ecmaFeatures: { jsx: true },
       },
     },
+  },
+  {
+    files: ['**/*.{js,jsx}'],
     plugins: {
-      react,
       'react-hooks': reactHooks,
       'react-refresh': reactRefresh,
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
+      // Hooks are linted by eslint-plugin-react-hooks; skip @eslint-react duplicates.
+      '@eslint-react/error-boundaries': 'off',
+      '@eslint-react/exhaustive-deps': 'off',
+      '@eslint-react/purity': 'off',
+      '@eslint-react/rules-of-hooks': 'off',
+      '@eslint-react/set-state-in-effect': 'off',
+      '@eslint-react/set-state-in-render': 'off',
+      '@eslint-react/static-components': 'off',
+      '@eslint-react/use-memo': 'off',
+      // Existing effects that sync derived state; tracked for a separate refactor.
+      'react-hooks/set-state-in-effect': 'warn',
+      // A literal "$" before prices is intentional USD formatting.
+      '@eslint-react/jsx-no-leaked-dollar': 'off',
       'react-refresh/only-export-components': [
         'warn',
         { allowConstantExport: true },
       ],
-      'react/prop-types': 'off',
-      'react/react-in-jsx-scope': 'off',
     },
-    settings: { react: { version: 'detect' } },
   },
   {
     files: ['**/*.test.{js,jsx}', 'src/test/**'],

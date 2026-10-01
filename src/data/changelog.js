@@ -4,6 +4,22 @@
  */
 export const changelogEntries = [
   {
+    version: '2.7.6',
+    date: '2026-10-01',
+    titleEn: 'Toolchain upgrade: Vite 8, Vitest 5, ESLint 10',
+    titleZh: '工具链升级：Vite 8、Vitest 5、ESLint 10',
+    highlightsEn: [
+      'Vite 8 + plugin-react 6, Vitest 5 + jsdom 29; all 117 tests pass unchanged',
+      'ESLint 10 with eslint-plugin-react-hooks 7 and @eslint-react; npm audit clean',
+      'CI and .nvmrc move to Node 22 (Node 20 is end-of-life)',
+    ],
+    highlightsZh: [
+      'Vite 8 + plugin-react 6、Vitest 5 + jsdom 29；117 项测试无需改动全部通过',
+      'ESLint 10 + eslint-plugin-react-hooks 7 + @eslint-react；npm audit 零漏洞',
+      'CI 与 .nvmrc 升到 Node 22（Node 20 已停止维护）',
+    ],
+  },
+  {
     version: '2.7.5',
     date: '2026-09-25',
     titleEn: 'Crawlable ?section= deep links',

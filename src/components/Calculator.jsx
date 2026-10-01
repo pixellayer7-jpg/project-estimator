@@ -246,8 +246,8 @@ export default function Calculator({ lang = 'en', onHydratedLang }) {
   const [manualLoadInput, setManualLoadInput] = useState('')
   const saveAbortRef = useRef(null)
   const hydrateAbortRef = useRef(null)
-  const hydrateGen = useRef(0)
-  const projectBtnRefs = useRef([])
+  const hydrateGenRef = useRef(0)
+  const projectBtnsRef = useRef([])
 
   const { projectType, addOnIds, extraSections, clientName = '' } = form
 
@@ -298,14 +298,14 @@ export default function Calculator({ lang = 'en', onHydratedLang }) {
       hydrateAbortRef.current?.abort()
       const ac = new AbortController()
       hydrateAbortRef.current = ac
-      const gen = ++hydrateGen.current
+      const gen = ++hydrateGenRef.current
       setLoadRemote('loading')
       setLoadRemoteErr('')
       try {
         const row = await getQuoteById(quoteApiBase, loadId, {
           signal: ac.signal,
         })
-        if (gen !== hydrateGen.current) return
+        if (gen !== hydrateGenRef.current) return
         const {
           form: nextForm,
           quoteRef: rowRef,
@@ -329,7 +329,7 @@ export default function Calculator({ lang = 'en', onHydratedLang }) {
         }
       } catch (e) {
         if (ac.signal.aborted) return
-        if (gen !== hydrateGen.current) return
+        if (gen !== hydrateGenRef.current) return
         setLoadRemote('err')
         setLoadRemoteErr(e instanceof Error ? e.message : String(e))
       }
@@ -395,7 +395,7 @@ export default function Calculator({ lang = 'en', onHydratedLang }) {
   }
 
   function handleReset() {
-    hydrateGen.current += 1
+    hydrateGenRef.current += 1
     hydrateAbortRef.current?.abort()
     hydrateAbortRef.current = null
     setLoadRemote('idle')
@@ -433,7 +433,7 @@ export default function Calculator({ lang = 'en', onHydratedLang }) {
   }
 
   function handleProjectKeyDown(e, index) {
-    let next = index
+    let next
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
       next = (index + 1) % projectTypes.length
     } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
@@ -447,7 +447,7 @@ export default function Calculator({ lang = 'en', onHydratedLang }) {
     }
     e.preventDefault()
     setProjectType(projectTypes[next].id)
-    projectBtnRefs.current[next]?.focus()
+    projectBtnsRef.current[next]?.focus()
   }
 
   function handleDownloadTxt() {
@@ -703,7 +703,7 @@ export default function Calculator({ lang = 'en', onHydratedLang }) {
                 <button
                   key={p.id}
                   ref={(el) => {
-                    projectBtnRefs.current[index] = el
+                    projectBtnsRef.current[index] = el
                   }}
                   type="button"
                   role="radio"

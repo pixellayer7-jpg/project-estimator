@@ -63,10 +63,10 @@ describe('App', () => {
     expect(
       screen.getByRole('heading', { name: /^Changelog$/ })
     ).toBeInTheDocument()
-    expect(screen.getByText(/^v2\.7\.5$/)).toBeInTheDocument()
+    expect(screen.getByText(/^v2\.7\.6$/)).toBeInTheDocument()
     expect(
       screen.getByRole('heading', {
-        name: /Crawlable \?section=/,
+        name: /Toolchain upgrade: Vite 8/,
       })
     ).toBeInTheDocument()
   })
