@@ -36,6 +36,10 @@ const QUOTE_STATUSES = ['draft', 'sent', 'accepted', 'declined']
 const LEAD_STATUSES = ['new', 'contacted', 'qualified', 'closed']
 const TABS = ['stats', 'quotes', 'leads']
 
+function errorMessage(e) {
+  return e instanceof Error ? e.message : String(e)
+}
+
 function detectForcedDemo() {
   try {
     return new URLSearchParams(window.location.search).get('demo') === '1'
@@ -48,7 +52,10 @@ export default function CrmAdmin({ lang }) {
   const isEn = lang === 'en'
   const apiBase = normalizeQuoteApiBase(import.meta.env.VITE_QUOTE_API_URL)
   const forcedDemo = detectForcedDemo()
-  const [useDemo, setUseDemo] = useState(() => !apiBase || forcedDemo)
+  const [initialDemo] = useState(() =>
+    !apiBase || forcedDemo ? loadCrmDemoState() : null
+  )
+  const [useDemo, setUseDemo] = useState(initialDemo !== null)
 
   const [token, setToken] = useState(() => {
     try {
@@ -58,9 +65,11 @@ export default function CrmAdmin({ lang }) {
     }
   })
   const [tab, setTab] = useState('stats')
-  const [quotes, setQuotes] = useState([])
-  const [leads, setLeads] = useState([])
-  const [stats, setStats] = useState(null)
+  const [quotes, setQuotes] = useState(initialDemo?.quotes ?? [])
+  const [leads, setLeads] = useState(initialDemo?.leads ?? [])
+  const [stats, setStats] = useState(() =>
+    initialDemo ? demoStatsFromState(initialDemo) : null
+  )
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [savedToken, setSavedToken] = useState(false)
@@ -170,38 +179,64 @@ export default function CrmAdmin({ lang }) {
     applyDemoState(loadCrmDemoState())
   }, [applyDemoState])
 
+  const fetchLive = useCallback(async () => {
+    const tok = token.trim()
+    const [statsData, quotesData, leadsData] = await Promise.all([
+      getStats(apiBase),
+      tok
+        ? listQuotesRecent(apiBase, tok, 100)
+        : Promise.resolve({ items: [] }),
+      tok ? listLeadsRecent(apiBase, tok, 100) : Promise.resolve({ items: [] }),
+    ])
+    return {
+      stats: statsData,
+      quotes: Array.isArray(quotesData.items) ? quotesData.items : [],
+      leads: Array.isArray(leadsData.items) ? leadsData.items : [],
+    }
+  }, [apiBase, token])
+
+  const applyLive = useCallback((data) => {
+    setStats(data.stats)
+    setQuotes(data.quotes)
+    setLeads(data.leads)
+    setError('')
+  }, [])
+
   const refreshLive = useCallback(async () => {
     if (!apiBase) return
     setLoading(true)
     setError('')
     try {
-      const tok = token.trim()
-      const [statsData, quotesData, leadsData] = await Promise.all([
-        getStats(apiBase),
-        tok
-          ? listQuotesRecent(apiBase, tok, 100)
-          : Promise.resolve({ items: [] }),
-        tok
-          ? listLeadsRecent(apiBase, tok, 100)
-          : Promise.resolve({ items: [] }),
-      ])
-      setStats(statsData)
-      setQuotes(Array.isArray(quotesData.items) ? quotesData.items : [])
-      setLeads(Array.isArray(leadsData.items) ? leadsData.items : [])
+      applyLive(await fetchLive())
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
+      setError(errorMessage(e))
     } finally {
       setLoading(false)
     }
-  }, [apiBase, token])
+  }, [apiBase, fetchLive, applyLive])
+
+  const liveKey = !useDemo && apiBase && token ? `${apiBase}\n${token}` : null
+  const [liveLoadedKey, setLiveLoadedKey] = useState(null)
+  const busy = loading || (liveKey !== null && liveLoadedKey !== liveKey)
 
   useEffect(() => {
-    if (useDemo) {
-      refreshDemo()
-      return
+    if (!liveKey) return
+    let active = true
+    fetchLive()
+      .then(
+        (data) => active && applyLive(data),
+        (e) => active && setError(errorMessage(e))
+      )
+      .finally(() => active && setLiveLoadedKey(liveKey))
+    return () => {
+      active = false
     }
-    if (apiBase && token) refreshLive()
-  }, [useDemo, apiBase, token, refreshDemo, refreshLive])
+  }, [liveKey, fetchLive, applyLive])
+
+  function handleToggleDemo() {
+    if (!useDemo) refreshDemo()
+    setUseDemo(!useDemo)
+  }
 
   function handleSaveToken(e) {
     e.preventDefault()
@@ -225,7 +260,7 @@ export default function CrmAdmin({ lang }) {
         await patchQuoteStatus(apiBase, token.trim(), id, status)
         await refreshLive()
       } catch (e) {
-        setError(e instanceof Error ? e.message : String(e))
+        setError(errorMessage(e))
       }
     })()
   }
@@ -241,7 +276,7 @@ export default function CrmAdmin({ lang }) {
         await patchLeadStatus(apiBase, token.trim(), id, status)
         await refreshLive()
       } catch (e) {
-        setError(e instanceof Error ? e.message : String(e))
+        setError(errorMessage(e))
       }
     })()
   }
@@ -303,7 +338,7 @@ export default function CrmAdmin({ lang }) {
             <button
               type="button"
               className="btn btn-outline"
-              onClick={() => setUseDemo((v) => !v)}
+              onClick={handleToggleDemo}
             >
               {useDemo ? t.useLive : t.useDemo}
             </button>
@@ -436,9 +471,9 @@ export default function CrmAdmin({ lang }) {
                 type="button"
                 className="btn btn-primary"
                 onClick={refreshLive}
-                disabled={loading || !token.trim()}
+                disabled={busy || !token.trim()}
               >
-                {loading ? '…' : t.refresh}
+                {busy ? '…' : t.refresh}
               </button>
             </div>
           </form>
@@ -516,7 +551,7 @@ export default function CrmAdmin({ lang }) {
                 {t.exportCsv}
               </button>
             </div>
-            {quotes.length === 0 && !loading ? (
+            {quotes.length === 0 && !busy ? (
               <p>{t.emptyQuotes}</p>
             ) : (
               <div className="crm-admin-table-wrap">
@@ -626,7 +661,7 @@ export default function CrmAdmin({ lang }) {
                 {t.exportCsv}
               </button>
             </div>
-            {leads.length === 0 && !loading ? (
+            {leads.length === 0 && !busy ? (
               <p>{t.emptyLeads}</p>
             ) : (
               <div className="crm-admin-table-wrap">

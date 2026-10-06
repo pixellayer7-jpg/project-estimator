@@ -4,6 +4,20 @@
  */
 export const changelogEntries = [
   {
+    version: '2.7.7',
+    date: '2026-10-05',
+    titleEn: 'Zero lint warnings: effects refactored',
+    titleZh: 'Lint 零警告：重构 effect',
+    highlightsEn: [
+      'Removed setState-in-effect from calculator, contact form, and CRM (initial state, render-time reset, event handlers)',
+      'CRM live auto-load ignores stale responses; rule is back to error; 5 new tests (122 total)',
+    ],
+    highlightsZh: [
+      '计算器、留言表单、CRM 移除 effect 内同步 setState（初始化读取、渲染时重置、事件处理）',
+      'CRM 线上自动加载忽略过期响应；规则恢复为 error；新增 5 项测试（共 122 项）',
+    ],
+  },
+  {
     version: '2.7.6',
     date: '2026-10-01',
     titleEn: 'Toolchain upgrade: Vite 8, Vitest 5, ESLint 10',

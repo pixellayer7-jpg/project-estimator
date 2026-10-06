@@ -35,6 +35,19 @@ const STRINGS_ZH = {
   privacy: '通过 Formspree 提交，数据处理见其隐私说明。',
 }
 
+function readHandoffSummary() {
+  try {
+    const raw = sessionStorage.getItem(CONTACT_HANDOFF_KEY)
+    if (!raw) return ''
+    const data = JSON.parse(raw)
+    return typeof data?.summary === 'string' && data.summary.trim()
+      ? data.summary
+      : ''
+  } catch {
+    return ''
+  }
+}
+
 export default function ContactForm({ lang }) {
   const formId = import.meta.env.VITE_FORMSPREE_FORM_ID
   const leadApiBase = normalizeQuoteApiBase(import.meta.env.VITE_LEAD_API_URL)
@@ -43,22 +56,9 @@ export default function ContactForm({ lang }) {
   const en = lang === 'en'
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
-  const [message, setMessage] = useState('')
+  const [message, setMessage] = useState(readHandoffSummary)
   const [status, setStatus] = useState('idle')
   const statusRef = useRef(null)
-
-  useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem(CONTACT_HANDOFF_KEY)
-      if (!raw) return
-      const data = JSON.parse(raw)
-      if (typeof data?.summary === 'string' && data.summary.trim()) {
-        setMessage(data.summary)
-      }
-    } catch {
-      /* ignore */
-    }
-  }, [])
 
   useEffect(() => {
     if (status === 'ok' && statusRef.current) {

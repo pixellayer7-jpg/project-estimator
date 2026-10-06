@@ -42,8 +42,6 @@ export default [
       '@eslint-react/set-state-in-render': 'off',
       '@eslint-react/static-components': 'off',
       '@eslint-react/use-memo': 'off',
-      // Existing effects that sync derived state; tracked for a separate refactor.
-      'react-hooks/set-state-in-effect': 'warn',
       // A literal "$" before prices is intentional USD formatting.
       '@eslint-react/jsx-no-leaked-dollar': 'off',
       'react-refresh/only-export-components': [

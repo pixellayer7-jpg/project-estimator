@@ -2,11 +2,25 @@ import { describe, it, expect, afterEach, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import ContactForm from './ContactForm'
+import { CONTACT_HANDOFF_KEY } from '../utils/contactHandoff'
 
 describe('ContactForm', () => {
   afterEach(() => {
     vi.unstubAllEnvs()
     vi.restoreAllMocks()
+    sessionStorage.clear()
+  })
+
+  it('prefills the message from the calculator handoff', () => {
+    vi.stubEnv('VITE_FORMSPREE_FORM_ID', 'testformid')
+    sessionStorage.setItem(
+      CONTACT_HANDOFF_KEY,
+      JSON.stringify({ summary: 'Landing page: $800 – $1,200' })
+    )
+    render(<ContactForm lang="en" />)
+    expect(screen.getByLabelText(/^Message$/i)).toHaveValue(
+      'Landing page: $800 – $1,200'
+    )
   })
 
   it('renders nothing when Formspree id and lead API are unset', () => {

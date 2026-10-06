@@ -289,6 +289,32 @@ describe('Calculator', () => {
     })
   })
 
+  it('clears the saved link when the estimate changes', async () => {
+    vi.stubEnv('VITE_QUOTE_API_URL', 'https://api.example.com')
+    const id = 'aaaaaaaa-bbbb-4ccc-8bbb-eeeeeeeeeeee'
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 201,
+      text: async () =>
+        JSON.stringify({
+          id,
+          createdAt: '2026-01-01T00:00:00.000Z',
+          path: `/api/v1/quotes/${id}`,
+        }),
+    })
+    const user = userEvent.setup()
+    render(<Calculator lang="en" />)
+    await user.click(screen.getByRole('button', { name: /save online copy/i }))
+    const savedPath = new RegExp(`/api/v1/quotes/${id}`)
+    await waitFor(() => {
+      expect(screen.getByText(savedPath)).toBeInTheDocument()
+    })
+    await user.click(
+      screen.getByRole('radio', { name: /Company \/ Agency Website/i })
+    )
+    expect(screen.queryByText(savedPath)).not.toBeInTheDocument()
+  })
+
   it('shows calculator ?load= link when VITE_SITE_URL is set', async () => {
     vi.stubEnv('VITE_QUOTE_API_URL', 'https://api.example.com')
     vi.stubEnv('VITE_SITE_URL', 'https://calc.example.com')

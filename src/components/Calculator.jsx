@@ -226,10 +226,11 @@ export default function Calculator({ lang = 'en', onHydratedLang }) {
     () => normalizeQuoteApiBase(import.meta.env.VITE_SITE_URL),
     []
   )
-  const [form, setForm] = useState(() => ({
-    ...defaultForm,
-    ...(loadEstimatorForm() ?? {}),
-  }))
+  const [form, setForm] = useState(() => {
+    const saved = { ...defaultForm, ...(loadEstimatorForm() ?? {}) }
+    if (new URLSearchParams(window.location.search).get('load')) return saved
+    return { ...saved, ...parseCalculatorUrlParams() }
+  })
   const [quoteRef, setQuoteRef] = useState(() => ensureQuoteRef())
   const [copyState, setCopyState] = useState('idle')
   const [copyAnnounce, setCopyAnnounce] = useState('')
@@ -280,8 +281,16 @@ export default function Calculator({ lang = 'en', onHydratedLang }) {
     return { min, max, summary, mailtoHref, timelineText }
   }, [lang, projectType, addOnIds, extraSections, quoteRef])
 
-  useEffect(() => {
-    saveAbortRef.current?.abort()
+  const quoteKey = JSON.stringify([
+    lang,
+    projectType,
+    addOnIds,
+    extraSections,
+    quoteRef,
+  ])
+  const [savedForKey, setSavedForKey] = useState(quoteKey)
+  if (savedForKey !== quoteKey) {
+    setSavedForKey(quoteKey)
     setSaveState('idle')
     setSaveUrl(null)
     setSaveSiteUrl(null)
@@ -289,7 +298,11 @@ export default function Calculator({ lang = 'en', onHydratedLang }) {
     setSaveErr('')
     setSaveLinkCopyState('idle')
     setSaveSiteLinkCopyState('idle')
-  }, [lang, projectType, addOnIds, extraSections, quoteRef, min, max])
+  }
+
+  useEffect(() => {
+    saveAbortRef.current?.abort()
+  }, [quoteKey])
 
   const hydrateQuoteId = useCallback(
     async (loadId, { stripUrl = false } = {}) => {
@@ -340,20 +353,7 @@ export default function Calculator({ lang = 'en', onHydratedLang }) {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     if (params.get('load')) return
-    const parsed = parseCalculatorUrlParams()
-    if (!parsed.projectType && !parsed.addOnIds && !parsed.extraSections) return
-    setForm((f) => {
-      const next = {
-        ...f,
-        ...(parsed.projectType ? { projectType: parsed.projectType } : {}),
-        ...(parsed.addOnIds ? { addOnIds: parsed.addOnIds } : {}),
-        ...(parsed.extraSections
-          ? { extraSections: parsed.extraSections }
-          : {}),
-      }
-      saveEstimatorForm(next)
-      return next
-    })
+    if (Object.keys(parseCalculatorUrlParams()).length === 0) return
     stripCalculatorMarketingParams()
   }, [])
 
