@@ -1,11 +1,11 @@
 # Project Quote Calculator — PixelLayer L.L.C
 
 > **Portfolio highlight** · [My GitHub](https://github.com/pixellayer7-jpg) · **Live demo:** [project-estimator](https://pixellayer7-jpg.github.io/project-estimator/)  
-> React 18 · Vite 8 · Vitest 5 · ESLint 10 · i18n (EN/中文) · GitHub Actions CI · optional Fastify API · **Good for interviews:** config-driven pricing, `?load=<uuid>` share, tests & a11y.
+> React 19 · Vite 8 · Vitest 5 · ESLint 10 · i18n (EN/中文) · GitHub Actions CI · optional Fastify API · **Good for interviews:** config-driven pricing, `?load=<uuid>` share, tests & a11y.
 
 A small React app that gives clients an **estimated price range** for common project types (landing page, company website, dashboard). Options include add-ons (design from scratch, multilingual, rush) and extra sections. Final CTA links to email for a fixed quote.
 
-![React](https://img.shields.io/badge/React-18-61dafb?logo=react)
+![React](https://img.shields.io/badge/React-19-61dafb?logo=react)
 ![Vite](https://img.shields.io/badge/Vite-8-646cff?logo=vite)
 [![CI](https://github.com/pixellayer7-jpg/project-estimator/actions/workflows/ci.yml/badge.svg)](https://github.com/pixellayer7-jpg/project-estimator/actions/workflows/ci.yml)
 [![Pages](https://github.com/pixellayer7-jpg/project-estimator/actions/workflows/pages.yml/badge.svg)](https://github.com/pixellayer7-jpg/project-estimator/actions/workflows/pages.yml)
@@ -70,7 +70,7 @@ Related: [PixelLayer landing page repo](https://github.com/pixellayer7-jpg/1) ·
 
 ## Tech
 
-- React 18 + Vite 8 (Node 22.13+)
+- React 19 + Vite 8 (Node 22.13+)
 - Vitest 5 + jsdom 29 + Testing Library
 - ESLint 10 flat config: `eslint-plugin-react-hooks` + `@eslint-react/eslint-plugin`
 - Plain CSS (same dark theme as PixelLayer landing)

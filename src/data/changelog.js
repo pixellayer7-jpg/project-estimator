@@ -4,6 +4,20 @@
  */
 export const changelogEntries = [
   {
+    version: '2.7.8',
+    date: '2026-10-08',
+    titleEn: 'React 19',
+    titleZh: 'React 19',
+    highlightsEn: [
+      'React 19.3 + Vite 8.3.3; no removed APIs in use, all 122 tests pass unchanged',
+      'Production build checked in a real browser: ?type= prefill, ?section= scroll, CRM demo',
+    ],
+    highlightsZh: [
+      'React 19.3 + Vite 8.3.3；未使用已移除 API，122 项测试无需改动全部通过',
+      '生产构建经真实浏览器验证：?type= 预填、?section= 定位、CRM 演示',
+    ],
+  },
+  {
     version: '2.7.7',
     date: '2026-10-05',
     titleEn: 'Zero lint warnings: effects refactored',
