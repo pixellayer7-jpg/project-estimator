@@ -1,7 +1,7 @@
 # Project Quote Calculator — PixelLayer L.L.C
 
 > **Portfolio highlight** · [My GitHub](https://github.com/pixellayer7-jpg) · **Live demo:** [project-estimator](https://pixellayer7-jpg.github.io/project-estimator/)  
-> React 19 · Vite 8 · Vitest 5 · ESLint 10 · i18n (EN/中文) · GitHub Actions CI · optional Fastify API · **Good for interviews:** config-driven pricing, `?load=<uuid>` share, tests & a11y.
+> React 19 · Vite 8 · Vitest 5 · Playwright · ESLint 10 · i18n (EN/中文) · GitHub Actions CI · optional Fastify API · **Good for interviews:** config-driven pricing, `?load=<uuid>` share, tests & a11y.
 
 A small React app that gives clients an **estimated price range** for common project types (landing page, company website, dashboard). Options include add-ons (design from scratch, multilingual, rush) and extra sections. Final CTA links to email for a fixed quote.
 
@@ -72,6 +72,7 @@ Related: [PixelLayer landing page repo](https://github.com/pixellayer7-jpg/1) ·
 
 - React 19 + Vite 8 (Node 22.13+)
 - Vitest 5 + jsdom 29 + Testing Library
+- Playwright e2e on the production build (Chromium, in CI)
 - ESLint 10 flat config: `eslint-plugin-react-hooks` + `@eslint-react/eslint-plugin`
 - Plain CSS (same dark theme as PixelLayer landing)
 
@@ -89,9 +90,10 @@ npm run format:check
 npm run check  # format:check + lint + test (same checks as CI before build)
 npm test       # vitest run
 npm run test:watch
+npm run test:e2e # Playwright (first run: npx playwright install chromium)
 ```
 
-Tests live next to sources (`*.test.js` / `*.test.jsx`). CI runs **`npm run check`** then **`npm run build`**. Duplicate pushes/PRs cancel older runs (**concurrency**).
+Unit tests live next to sources (`*.test.js` / `*.test.jsx`). Browser e2e specs live in `e2e/*.e2e.js` and run against the production build: marketing `?type=` prefill, reload persistence, quote → proposal → typed acceptance → CRM, CRM demo, and `?section=` scroll. CI runs **`npm run check`** then **`npm run build`**, with e2e as a parallel job. Duplicate pushes/PRs cancel older runs (**concurrency**).
 
 - **Error boundary** — Uncaught render errors show a bilingual fallback with a reload button instead of a blank screen.
 - **ESLint** — `npm run lint` (React, hooks, refresh plugin; config in `eslint.config.js`).

@@ -4,6 +4,20 @@
  */
 export const changelogEntries = [
   {
+    version: '2.7.9',
+    date: '2026-10-12',
+    titleEn: 'Playwright e2e on the production build',
+    titleZh: 'Playwright 端到端测试（生产构建）',
+    highlightsEn: [
+      'Real-browser specs: ?type= prefill, reload persistence, quote → proposal → typed acceptance → CRM signer, CRM demo, ?section= scroll',
+      'Runs as a parallel CI job (Chromium) with traces uploaded on failure',
+    ],
+    highlightsZh: [
+      '真实浏览器用例：?type= 预填、刷新后保留、报价 → 提案 → 键入签署 → CRM 显示签署人、CRM 演示、?section= 定位',
+      '作为并行 CI 任务运行（Chromium），失败时上传 trace',
+    ],
+  },
+  {
     version: '2.7.8',
     date: '2026-10-08',
     titleEn: 'React 19',
