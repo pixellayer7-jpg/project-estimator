@@ -91,9 +91,10 @@ npm run check  # format:check + lint + test (same checks as CI before build)
 npm test       # vitest run
 npm run test:watch
 npm run test:e2e # Playwright (first run: npx playwright install chromium)
+npm run test:coverage # Vitest + v8 coverage with gates (see vite.config.js)
 ```
 
-Unit tests live next to sources (`*.test.js` / `*.test.jsx`). Browser e2e specs live in `e2e/*.e2e.js` and run against the production build: marketing `?type=` prefill, reload persistence, quote → proposal → typed acceptance → CRM, CRM demo, and `?section=` scroll. CI runs **`npm run check`** then **`npm run build`**, with e2e as a parallel job. Duplicate pushes/PRs cancel older runs (**concurrency**).
+Unit tests live next to sources (`*.test.js` / `*.test.jsx`). Browser e2e specs live in `e2e/*.e2e.js` and run against the production build: marketing `?type=` prefill, reload persistence, quote → proposal → typed acceptance → CRM, CRM demo, and `?section=` scroll. CI runs format, lint, and **`npm run test:coverage`** (coverage table in the job summary; ~80% lines over all `src` files, and a drop below the gates fails the build), then **`npm run build`**, with e2e as a parallel job. Duplicate pushes/PRs cancel older runs (**concurrency**).
 
 - **Error boundary** — Uncaught render errors show a bilingual fallback with a reload button instead of a blank screen.
 - **ESLint** — `npm run lint` (React, hooks, refresh plugin; config in `eslint.config.js`).

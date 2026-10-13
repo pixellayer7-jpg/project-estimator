@@ -83,6 +83,14 @@ export default defineConfig(({ mode }) => {
       setupFiles: './src/test/setup.js',
       globals: false,
       css: true,
+      coverage: {
+        provider: 'v8',
+        include: ['src/**/*.{js,jsx}'],
+        exclude: ['src/**/*.test.{js,jsx}', 'src/test/**', 'src/main.jsx'],
+        reporter: ['text-summary', 'json-summary', 'html'],
+        // Floors at the current level so coverage can only go up.
+        thresholds: { lines: 79, statements: 77, branches: 68, functions: 76 },
+      },
     },
   }
 })

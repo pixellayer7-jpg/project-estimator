@@ -23,7 +23,11 @@ jobs:
           node-version: '22'
           cache: 'npm'
       - run: npm ci
-      - run: npm run check
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm run test:coverage
+      - if: ${{ !cancelled() && hashFiles('coverage/coverage-summary.json') != '' }}
+        run: node scripts/coverage-summary.mjs
       - run: npm run build
         env:
           VITE_SITE_URL: https://pixellayer7-jpg.github.io/project-estimator

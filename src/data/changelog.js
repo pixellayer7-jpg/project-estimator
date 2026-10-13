@@ -4,6 +4,20 @@
  */
 export const changelogEntries = [
   {
+    version: '2.7.10',
+    date: '2026-10-13',
+    titleEn: 'Coverage gates in CI',
+    titleZh: 'CI 覆盖率门槛',
+    highlightsEn: [
+      'v8 coverage over every src file (not only files tests touch): ~80% lines, 69% branches',
+      'Thresholds at the current level fail the build on a drop; table posted to the CI job summary',
+    ],
+    highlightsZh: [
+      'v8 覆盖率统计全部 src 文件（不只测试加载过的）：行约 80%，分支 69%',
+      '阈值设在当前水平，下降即构建失败；覆盖率表写入 CI 任务摘要',
+    ],
+  },
+  {
     version: '2.7.9',
     date: '2026-10-12',
     titleEn: 'Playwright e2e on the production build',
