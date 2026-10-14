@@ -3,7 +3,13 @@ import {
   buildCalculatorLoadUrl,
   extractQuoteIdFromInput,
   getQuoteById,
+  getStats,
+  listLeadsRecent,
+  listQuotesRecent,
   normalizeQuoteApiBase,
+  patchLeadStatus,
+  patchQuoteStatus,
+  postLead,
   postQuoteSnapshot,
 } from './quoteApi'
 
@@ -112,5 +118,121 @@ describe('quoteApi', () => {
       `https://api.test/api/v1/quotes/${id}`,
       expect.objectContaining({ method: 'GET' })
     )
+  })
+
+  it('getQuoteById and postQuoteSnapshot reject malformed success bodies', async () => {
+    const id = 'aaaaaaaa-bbbb-4ccc-8aaa-eeeeeeeeeeee'
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => 'not json',
+    })
+    await expect(getQuoteById('https://api.test', id)).rejects.toThrow(
+      'Invalid response'
+    )
+    await expect(postQuoteSnapshot('https://api.test', {})).rejects.toThrow(
+      'Invalid response'
+    )
+  })
+})
+
+describe('quoteApi CRM endpoints', () => {
+  const BASE = 'https://api.test'
+  const ID = 'aaaaaaaa-bbbb-4ccc-8aaa-eeeeeeeeeeee'
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  function stubFetch(ok, status, body) {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok,
+      status,
+      text: async () => body,
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    return fetchMock
+  }
+
+  const CASES = [
+    {
+      name: 'listQuotesRecent',
+      call: (token) => listQuotesRecent(BASE, token, 5),
+      url: `${BASE}/api/v1/quotes?limit=5`,
+      method: 'GET',
+    },
+    {
+      name: 'listLeadsRecent',
+      call: (token) => listLeadsRecent(BASE, token),
+      url: `${BASE}/api/v1/leads?limit=50`,
+      method: 'GET',
+    },
+    {
+      name: 'patchQuoteStatus',
+      call: (token) => patchQuoteStatus(BASE, token, ID, 'won'),
+      url: `${BASE}/api/v1/quotes/${ID}`,
+      method: 'PATCH',
+      body: { status: 'won' },
+    },
+    {
+      name: 'patchLeadStatus',
+      call: (token) => patchLeadStatus(BASE, token, ID, 'contacted'),
+      url: `${BASE}/api/v1/leads/${ID}`,
+      method: 'PATCH',
+      body: { status: 'contacted' },
+    },
+    {
+      name: 'postLead',
+      call: () => postLead(BASE, { email: 'a@b.com' }),
+      url: `${BASE}/api/v1/leads`,
+      method: 'POST',
+      body: { email: 'a@b.com' },
+      public: true,
+    },
+    {
+      name: 'getStats',
+      call: () => getStats(BASE),
+      url: `${BASE}/api/v1/stats`,
+      method: 'GET',
+      public: true,
+    },
+  ]
+
+  for (const c of CASES) {
+    it(`${c.name} sends the right request and returns JSON`, async () => {
+      const fetchMock = stubFetch(true, 200, JSON.stringify({ ok: 1 }))
+      await expect(c.call('secret')).resolves.toEqual({ ok: 1 })
+      const [url, init] = fetchMock.mock.calls[0]
+      expect(url).toBe(c.url)
+      expect(init.method).toBe(c.method)
+      if (c.body) expect(JSON.parse(init.body)).toEqual(c.body)
+      if (!c.public) {
+        expect(init.headers.Authorization).toBe('Bearer secret')
+      }
+    })
+
+    it(`${c.name} surfaces API errors, falling back to the HTTP status`, async () => {
+      stubFetch(false, 401, JSON.stringify({ error: 'Unauthorized' }))
+      await expect(c.call('')).rejects.toThrow('Unauthorized')
+      stubFetch(false, 502, '<html>')
+      await expect(c.call('')).rejects.toThrow('HTTP 502')
+    })
+  }
+
+  it('list calls omit Authorization without a token and treat empty bodies as {}', async () => {
+    const fetchMock = stubFetch(true, 200, '')
+    await expect(listQuotesRecent(BASE, '')).resolves.toEqual({})
+    expect(fetchMock.mock.calls[0][1].headers.Authorization).toBeUndefined()
+  })
+
+  it('PATCH helpers reject malformed ids without calling fetch', async () => {
+    const fetchMock = stubFetch(true, 200, '{}')
+    await expect(patchQuoteStatus(BASE, 't', 'bad', 'won')).rejects.toThrow(
+      'Invalid id'
+    )
+    await expect(patchLeadStatus(BASE, 't', 'bad', 'new')).rejects.toThrow(
+      'Invalid id'
+    )
+    expect(fetchMock).not.toHaveBeenCalled()
   })
 })

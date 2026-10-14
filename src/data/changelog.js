@@ -4,6 +4,20 @@
  */
 export const changelogEntries = [
   {
+    version: '2.7.11',
+    date: '2026-10-13',
+    titleEn: 'Accessibility checks and higher coverage',
+    titleZh: '无障碍检查与更高覆盖率',
+    highlightsEn: [
+      'axe-core (WCAG 2.1 AA) scans calculator, proposal, portal and CRM in e2e; fixed button/tab contrast and underlined in-text links',
+      'Tests for the error boundary, CRM exports and every API helper: ~86% lines, 73% branches, gates raised to match',
+    ],
+    highlightsZh: [
+      'e2e 中用 axe-core（WCAG 2.1 AA）扫描计算器、提案、门户与 CRM；修复按钮/标签对比度，正文链接加下划线',
+      '新增错误边界、CRM 导出与全部 API 函数测试：行约 86%、分支 73%，门槛同步提高',
+    ],
+  },
+  {
     version: '2.7.10',
     date: '2026-10-13',
     titleEn: 'Coverage gates in CI',
