@@ -1,14 +1,43 @@
-import { describe, expect, it, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest'
+import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import ClientPortal from './ClientPortal'
 import { calculatePortalProgress, portalDemo } from '../data/clientPortalDemo'
 import { buildPortalFromQuote } from '../utils/portalFromQuote'
-import { PORTAL_ACCEPT_KEY } from '../utils/portalAcceptStore'
+import { acceptQuote, PORTAL_ACCEPT_KEY } from '../utils/portalAcceptStore'
+import { openSowPrintWindow } from '../utils/sowGenerator'
+import { openDepositInvoiceWindow } from '../utils/invoiceGenerator'
+import {
+  downloadEngagementJson,
+  downloadEngagementMarkdown,
+} from '../utils/engagementRecord'
+
+vi.mock('../utils/sowGenerator', async () => {
+  const actual = await vi.importActual('../utils/sowGenerator')
+  return { ...actual, openSowPrintWindow: vi.fn() }
+})
+
+vi.mock('../utils/invoiceGenerator', async () => {
+  const actual = await vi.importActual('../utils/invoiceGenerator')
+  return { ...actual, openDepositInvoiceWindow: vi.fn() }
+})
+
+vi.mock('../utils/engagementRecord', async () => {
+  const actual = await vi.importActual('../utils/engagementRecord')
+  return {
+    ...actual,
+    downloadEngagementJson: vi.fn(),
+    downloadEngagementMarkdown: vi.fn(),
+  }
+})
 
 describe('ClientPortal', () => {
   beforeEach(() => {
     localStorage.removeItem(PORTAL_ACCEPT_KEY)
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
   it('renders a transparent demo project with progress and milestones', () => {
@@ -85,6 +114,109 @@ describe('ClientPortal', () => {
     ).toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: /Download engagement JSON/i })
+    ).toBeInTheDocument()
+    await user.click(
+      screen.getByRole('button', { name: /Download engagement JSON/i })
+    )
+    await user.click(
+      screen.getByRole('button', { name: /Download engagement Markdown/i })
+    )
+    expect(downloadEngagementJson).toHaveBeenCalled()
+    expect(downloadEngagementMarkdown).toHaveBeenCalled()
+  })
+
+  it('prints, copies the share link, and opens draft artifacts', async () => {
+    const resets = []
+    const realTimeout = window.setTimeout.bind(window)
+    vi.spyOn(window, 'setTimeout').mockImplementation((fn, ms, ...rest) => {
+      if (ms === 2000) {
+        resets.push(fn)
+        return 0
+      }
+      return realTimeout(fn, ms, ...rest)
+    })
+    const user = userEvent.setup()
+    const writeText = vi.spyOn(navigator.clipboard, 'writeText')
+    const print = vi.fn()
+    window.print = print
+    const project = {
+      ...portalDemo,
+      quotePayload: {
+        projectTypeId: 'mystery',
+        addOnIds: ['i18n'],
+        extraSections: '1',
+        min: 800,
+        max: 1200,
+        quoteRef: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',
+        clientName: 'Ada',
+      },
+      deliverables: [
+        {
+          id: 'sow',
+          action: 'sow',
+          label: { en: 'Draft SOW', zh: '草案' },
+          detail: { en: 'Printable', zh: '可打印' },
+        },
+        {
+          id: 'invoice',
+          action: 'invoice',
+          label: { en: 'Draft invoice' },
+          detail: { en: 'Deposit' },
+        },
+        {
+          id: 'note',
+          action: 'other',
+          label: { en: 'Notes' },
+          detail: { en: 'Nothing to open' },
+        },
+      ],
+    }
+    render(<ClientPortal lang="en" project={project} />)
+    await user.click(screen.getByRole('button', { name: 'Print status page' }))
+    expect(print).toHaveBeenCalled()
+    await user.click(screen.getByRole('button', { name: 'Copy share link' }))
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining('portal=demo')
+    )
+    expect(
+      screen.getByRole('button', { name: 'Link copied' })
+    ).toBeInTheDocument()
+    await act(async () => {
+      resets.at(-1)()
+    })
+    expect(
+      screen.getByRole('button', { name: 'Copy share link' })
+    ).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /Draft SOW/ }))
+    await user.click(screen.getByRole('button', { name: /Draft invoice/ }))
+    await user.click(screen.getByRole('button', { name: /Notes/ }))
+    expect(openSowPrintWindow).toHaveBeenCalledWith(
+      expect.objectContaining({ projectTypeId: 'mystery', clientName: 'Ada' })
+    )
+    expect(openDepositInvoiceWindow).toHaveBeenCalledWith(
+      expect.objectContaining({ projectTypeLabel: 'mystery' })
+    )
+  })
+
+  it('shows a copy failure and a stored signer name', async () => {
+    const quoteRef = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee'
+    acceptQuote(quoteRef, { signerName: 'Jamie Chen' })
+    const user = userEvent.setup()
+    vi.spyOn(navigator.clipboard, 'writeText').mockRejectedValue(
+      new Error('denied')
+    )
+    const project = buildPortalFromQuote({
+      projectType: 'unknown-type',
+      addOnIds: [],
+      extraSections: '0',
+      quoteRef,
+    })
+    render(<ClientPortal lang="zh" project={project} />)
+    expect(screen.getByText(/已在本浏览器签署: Jamie Chen/)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '复制分享链接' }))
+    expect(
+      await screen.findByRole('button', { name: '复制失败' })
     ).toBeInTheDocument()
   })
 })

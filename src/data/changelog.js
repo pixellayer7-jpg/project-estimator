@@ -4,6 +4,20 @@
  */
 export const changelogEntries = [
   {
+    version: '2.7.12',
+    date: '2026-10-17',
+    titleEn: 'CRM and portal interactions covered',
+    titleZh: 'CRM 与客户门户交互补齐测试',
+    highlightsEn: [
+      'Demo and live CRM: status changes, exports, token save, unauthorized and failed updates',
+      'Portal: share link, print, draft SOW and invoice, engagement downloads. Lines 86% → 91%',
+    ],
+    highlightsZh: [
+      '演示与线上 CRM：改状态、导出、保存令牌、未授权和更新失败',
+      '门户：分享链接、打印、草案 SOW 与发票、合作记录下载。行覆盖率 86% → 91%',
+    ],
+  },
+  {
     version: '2.7.11',
     date: '2026-10-13',
     titleEn: 'Accessibility checks and higher coverage',
