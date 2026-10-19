@@ -4,6 +4,20 @@
  */
 export const changelogEntries = [
   {
+    version: '2.7.13',
+    date: '2026-10-19',
+    titleEn: 'Invoice, SOW, and calculator exports covered',
+    titleZh: '发票、SOW 与计算器导出补齐测试',
+    highlightsEn: [
+      'Invoice and SOW drafts, including Chinese copy, escaped client names, and a blocked print window',
+      'Calculator downloads, print, keyboard wrap, and a failed clipboard copy. Lines 91% → 95%',
+    ],
+    highlightsZh: [
+      '发票与 SOW 草案：中文文案、转义客户名，以及被拦截的打印窗口',
+      '计算器下载、打印、键盘换档，以及剪贴板失败。行覆盖率 91% → 95%',
+    ],
+  },
+  {
     version: '2.7.12',
     date: '2026-10-17',
     titleEn: 'CRM and portal interactions covered',

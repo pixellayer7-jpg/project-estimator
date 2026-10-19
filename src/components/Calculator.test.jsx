@@ -87,6 +87,99 @@ describe('Calculator', () => {
     ).toHaveAttribute('aria-checked', 'true')
   })
 
+  it('wraps selection with ArrowLeft, Home, and End', async () => {
+    const user = userEvent.setup()
+    render(<Calculator lang="en" />)
+    const landing = screen.getByRole('radio', { name: /^Landing Page$/i })
+    landing.focus()
+    await user.keyboard('{ArrowLeft}')
+    expect(screen.getByRole('radio', { name: /Dashboard/i })).toHaveAttribute(
+      'aria-checked',
+      'true'
+    )
+    await user.keyboard('{Home}')
+    expect(landing).toHaveAttribute('aria-checked', 'true')
+    await user.keyboard('{End}')
+    expect(screen.getByRole('radio', { name: /Dashboard/i })).toHaveAttribute(
+      'aria-checked',
+      'true'
+    )
+    await user.keyboard('x')
+    expect(screen.getByRole('radio', { name: /Dashboard/i })).toHaveAttribute(
+      'aria-checked',
+      'true'
+    )
+  })
+
+  it('downloads the summary and SOW, and opens print views', async () => {
+    URL.createObjectURL = vi.fn(() => 'blob:quote')
+    URL.revokeObjectURL = vi.fn()
+    const downloads = []
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(
+      function () {
+        if (this.download) downloads.push(this.download)
+      }
+    )
+    const opened = {
+      document: { open: vi.fn(), write: vi.fn(), close: vi.fn() },
+    }
+    vi.spyOn(window, 'open').mockReturnValue(opened)
+    const print = vi.spyOn(window, 'print').mockImplementation(() => {})
+    const user = userEvent.setup()
+    render(<Calculator lang="en" />)
+    await user.type(
+      screen.getByRole('textbox', { name: /Client name/i }),
+      'Ada & Co'
+    )
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Download estimate summary as a text file',
+      })
+    )
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Download statement of work draft as Markdown',
+      })
+    )
+    await user.click(
+      screen.getByRole('button', {
+        name: /Open print-ready proposal HTML/i,
+      })
+    )
+    await user.click(
+      screen.getByRole('button', { name: /Open deposit invoice draft/i })
+    )
+    await user.click(
+      screen.getByRole('button', {
+        name: /Open print dialog to save or print the estimate/i,
+      })
+    )
+    expect(downloads).toEqual([
+      'pixellayer-quote-summary.txt',
+      'pixelayer-sow-draft.md',
+    ])
+    expect(opened.document.write).toHaveBeenCalledWith(
+      expect.stringContaining('Statement of Work')
+    )
+    expect(opened.document.write).toHaveBeenCalledWith(
+      expect.stringContaining('Ada &amp; Co')
+    )
+    expect(print).toHaveBeenCalled()
+  })
+
+  it('shows copy failure when the clipboard rejects', async () => {
+    const user = userEvent.setup()
+    vi.spyOn(navigator.clipboard, 'writeText').mockRejectedValue(
+      new Error('denied')
+    )
+    render(<Calculator lang="zh" />)
+    const copyBtn = screen.getByRole('button', {
+      name: '将估算摘要复制到剪贴板',
+    })
+    await user.click(copyBtn)
+    expect(copyBtn).toHaveTextContent('复制失败')
+  })
+
   it('copy summary shows success feedback', async () => {
     const user = userEvent.setup()
     render(<Calculator lang="en" />)
