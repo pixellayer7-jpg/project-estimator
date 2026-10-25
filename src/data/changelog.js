@@ -4,6 +4,20 @@
  */
 export const changelogEntries = [
   {
+    version: '2.7.14',
+    date: '2026-10-25',
+    titleEn: 'Proposal, contact, and engagement record covered',
+    titleZh: '提案、联系表单与合作记录补齐测试',
+    highlightsEn: [
+      'Proposal: Chinese invoice, share-link copy, print, and engagement downloads',
+      'Contact form and engagement record, including lead-API failure. Lines 95% → 97%',
+    ],
+    highlightsZh: [
+      '提案：中文发票、复制分享链接、打印，以及合作记录下载',
+      '联系表单与合作记录，含询盘 API 失败。行覆盖率 95% → 97%',
+    ],
+  },
+  {
     version: '2.7.13',
     date: '2026-10-19',
     titleEn: 'Invoice, SOW, and calculator exports covered',
