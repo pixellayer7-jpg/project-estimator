@@ -89,7 +89,7 @@ export default defineConfig(({ mode }) => {
         exclude: ['src/**/*.test.{js,jsx}', 'src/test/**', 'src/main.jsx'],
         reporter: ['text-summary', 'json-summary', 'html'],
         // Floors at the current level so coverage can only go up.
-        thresholds: { lines: 96, statements: 93, branches: 89, functions: 96 },
+        thresholds: { lines: 98, statements: 96, branches: 90, functions: 98 },
       },
     },
   }

@@ -1,9 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import Calculator from './Calculator'
 
 const FORM_KEY = 'pixellayer-estimator-form'
+const originalLocation = window.location
 
 describe('Calculator', () => {
   beforeEach(() => {
@@ -13,6 +14,10 @@ describe('Calculator', () => {
   afterEach(() => {
     vi.unstubAllEnvs()
     vi.restoreAllMocks()
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: originalLocation,
+    })
     window.history.replaceState({}, '', '/')
   })
 
@@ -544,5 +549,324 @@ describe('Calculator', () => {
       'href',
       expect.stringContaining('type=landing')
     )
+  })
+
+  it('moves selection with ArrowDown and ArrowUp', async () => {
+    const user = userEvent.setup()
+    render(<Calculator lang="en" />)
+    const landing = screen.getByRole('radio', { name: /^Landing Page$/i })
+    landing.focus()
+    await user.keyboard('{ArrowDown}')
+    expect(
+      screen.getByRole('radio', { name: /Company \/ Agency Website/i })
+    ).toHaveAttribute('aria-checked', 'true')
+    await user.keyboard('{ArrowUp}')
+    expect(landing).toHaveAttribute('aria-checked', 'true')
+  })
+
+  it('puts the client name on the proposal and portal links', async () => {
+    const user = userEvent.setup()
+    render(<Calculator lang="en" />)
+    await user.type(screen.getByLabelText(/Client name/i), 'Acme Studio')
+    expect(
+      screen.getByRole('link', { name: /shareable in-app proposal/i })
+    ).toHaveAttribute('href', expect.stringContaining('client=Acme'))
+    expect(
+      screen.getByRole('link', {
+        name: /client status page generated from this quote/i,
+      })
+    ).toHaveAttribute('href', expect.stringContaining('client=Acme'))
+  })
+
+  it('copies the saved API link and reports a clipboard failure', async () => {
+    vi.stubEnv('VITE_QUOTE_API_URL', 'https://api.example.com')
+    const id = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee'
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 201,
+      text: async () =>
+        JSON.stringify({
+          id,
+          createdAt: '2026-01-01T00:00:00.000Z',
+          links: {
+            contact: `https://landing.example/1/?quote=${id}#contact`,
+          },
+        }),
+    })
+    const resets = []
+    const real = window.setTimeout.bind(window)
+    vi.spyOn(window, 'setTimeout').mockImplementation((fn, ms, ...args) => {
+      if (ms === 2000) {
+        resets.push(fn)
+        return 1
+      }
+      return real(fn, ms, ...args)
+    })
+    const user = userEvent.setup()
+    render(<Calculator lang="en" />)
+    await user.click(screen.getByRole('button', { name: /save online copy/i }))
+    const copy = await screen.findByRole('button', {
+      name: /copy share link to clipboard/i,
+    })
+    expect(
+      screen.getByRole('link', {
+        name: /open contact form with this estimate/i,
+      })
+    ).toHaveAttribute('href', `https://landing.example/1/?quote=${id}#contact`)
+    navigator.clipboard.writeText = vi.fn().mockResolvedValue(undefined)
+    await user.click(copy)
+    expect(copy).toHaveTextContent('Link copied!')
+    await act(() => {
+      resets.at(-1)()
+    })
+    expect(copy).toHaveTextContent('Copy link')
+
+    navigator.clipboard.writeText = vi
+      .fn()
+      .mockRejectedValue(new Error('denied'))
+    await user.click(copy)
+    expect(copy).toHaveTextContent('Copy link')
+  })
+
+  it('keeps the calculator link when copying it fails, and ignores a cancelled share', async () => {
+    vi.stubEnv('VITE_QUOTE_API_URL', 'https://api.example.com')
+    vi.stubEnv('VITE_SITE_URL', 'https://calc.example.com')
+    const id = 'aaaaaaaa-bbbb-4ccc-8aaa-eeeeeeeeeeee'
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 201,
+      text: async () =>
+        JSON.stringify({
+          id,
+          createdAt: '2026-01-01T00:00:00.000Z',
+        }),
+    })
+    const share = vi
+      .fn()
+      .mockRejectedValueOnce(
+        new DOMException('The user aborted a request.', 'AbortError')
+      )
+      .mockRejectedValueOnce('share-unavailable')
+    const user = userEvent.setup()
+    render(<Calculator lang="zh" />)
+    navigator.share = share
+    await user.click(screen.getByRole('button', { name: '保存线上副本' }))
+    const copyCalc = await screen.findByRole('button', {
+      name: /复制带 \?load= 的计算器地址/,
+    })
+    navigator.clipboard.writeText = vi
+      .fn()
+      .mockRejectedValue(new Error('denied'))
+    await user.click(copyCalc)
+    expect(copyCalc).toHaveTextContent('复制计算器链接')
+    const shareBtn = screen.getByRole('button', {
+      name: /通过系统分享菜单发送计算器链接/,
+    })
+    await user.click(shareBtn)
+    await user.click(shareBtn)
+    expect(share).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'PixelLayer 项目报价估算' })
+    )
+  })
+
+  it('opens the contact form after saving, and returns to idle when that save fails', async () => {
+    vi.stubEnv('VITE_QUOTE_API_URL', 'https://api.example.com/')
+    const id = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee'
+    const href = { value: 'http://localhost:3000/' }
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: {
+        origin: 'http://localhost:3000',
+        pathname: '/',
+        search: '',
+        hash: '',
+        get href() {
+          return href.value
+        },
+        set href(v) {
+          href.value = v
+        },
+      },
+    })
+    globalThis.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      status: 201,
+      text: async () =>
+        JSON.stringify({
+          id,
+          createdAt: '2026-01-01T00:00:00.000Z',
+        }),
+    })
+    const user = userEvent.setup()
+    const view = render(<Calculator lang="en" />)
+    await user.click(
+      screen.getByRole('button', { name: /Save & contact on main site/i })
+    )
+    await waitFor(() => {
+      expect(href.value).toContain(`quote=${id}`)
+      expect(href.value).toContain('#contact')
+    })
+    expect(sessionStorage.getItem('pixellayer-last-saved-quote-id')).toBe(id)
+    view.unmount()
+
+    const resets = []
+    const real = window.setTimeout.bind(window)
+    vi.spyOn(window, 'setTimeout').mockImplementation((fn, ms, ...args) => {
+      if (ms === 3000) {
+        resets.push(fn)
+        return 1
+      }
+      return real(fn, ms, ...args)
+    })
+    globalThis.fetch = vi.fn().mockRejectedValueOnce(new Error('offline'))
+    render(<Calculator lang="en" />)
+    await user.click(
+      screen.getByRole('button', { name: /Save & contact on main site/i })
+    )
+    await waitFor(() => expect(resets.length).toBeGreaterThan(0))
+    await act(() => {
+      resets.at(-1)()
+    })
+    expect(
+      screen.getByRole('button', { name: /Save & contact on main site/i })
+    ).toBeEnabled()
+  })
+
+  it('shows a non-Error save failure and ignores a stale save response', async () => {
+    vi.stubEnv('VITE_QUOTE_API_URL', 'https://api.example.com')
+    const user = userEvent.setup()
+    globalThis.fetch = vi.fn().mockRejectedValueOnce('disk full')
+    const failed = render(<Calculator lang="en" />)
+    await user.click(screen.getByRole('button', { name: /save online copy/i }))
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Save failed: disk full'
+    )
+    failed.unmount()
+
+    const first = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee'
+    const second = 'bbbbbbbb-bbbb-4ccc-8ddd-eeeeeeeeeeee'
+    let resolveFirst
+    let calls = 0
+    globalThis.fetch = vi.fn().mockImplementation(() => {
+      calls += 1
+      if (calls === 1) {
+        return new Promise((resolve) => {
+          resolveFirst = resolve
+        })
+      }
+      return Promise.resolve({
+        ok: true,
+        status: 201,
+        text: async () =>
+          JSON.stringify({
+            id: second,
+            createdAt: '2026-01-01T00:00:00.000Z',
+          }),
+      })
+    })
+    render(<Calculator lang="en" />)
+    await user.click(screen.getByRole('button', { name: /save online copy/i }))
+    await waitFor(() => expect(resolveFirst).toBeTypeOf('function'))
+    await user.click(
+      screen.getByRole('radio', { name: /Company \/ Agency Website/i })
+    )
+    await user.click(screen.getByRole('button', { name: /save online copy/i }))
+    await screen.findByText(new RegExp(`/api/v1/quotes/${second}`))
+    resolveFirst({
+      ok: true,
+      status: 201,
+      text: async () =>
+        JSON.stringify({
+          id: first,
+          createdAt: '2026-01-01T00:00:00.000Z',
+        }),
+    })
+    await act(async () => {
+      await Promise.resolve()
+    })
+    expect(
+      screen.queryByText(new RegExp(`/api/v1/quotes/${first}`))
+    ).not.toBeInTheDocument()
+  })
+
+  it('ignores an older quote load and a failure after unmount', async () => {
+    vi.stubEnv('VITE_QUOTE_API_URL', 'https://api.example.com')
+    const first = 'aaaaaaaa-bbbb-4ccc-8aaa-eeeeeeeeeeee'
+    const second = 'bbbbbbbb-bbbb-4ccc-8bbb-eeeeeeeeeeee'
+    window.history.replaceState({}, '', `/?load=${first}`)
+    let resolveFirst
+    globalThis.fetch = vi.fn().mockImplementation((url) => {
+      if (String(url).includes(first)) {
+        return new Promise((resolve) => {
+          resolveFirst = resolve
+        })
+      }
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        text: async () =>
+          JSON.stringify({
+            projectType: 'dashboard',
+            addOnIds: [],
+            extraSections: '0',
+          }),
+      })
+    })
+    const view = render(<Calculator lang="en" />)
+    await waitFor(() => expect(resolveFirst).toBeTypeOf('function'))
+    window.history.replaceState({}, '', `/?load=${second}`)
+    window.dispatchEvent(new PopStateEvent('popstate'))
+    await waitFor(() => {
+      expect(screen.getByRole('radio', { name: /Dashboard/i })).toHaveAttribute(
+        'aria-checked',
+        'true'
+      )
+    })
+    resolveFirst({
+      ok: true,
+      status: 200,
+      text: async () =>
+        JSON.stringify({
+          projectType: 'website',
+          addOnIds: [],
+          extraSections: '0',
+        }),
+    })
+    await act(async () => {
+      await Promise.resolve()
+    })
+    expect(
+      screen.getByRole('radio', { name: /Company \/ Agency Website/i })
+    ).toHaveAttribute('aria-checked', 'false')
+    view.unmount()
+
+    window.history.replaceState({}, '', `/?load=${first}`)
+    let rejectLate
+    globalThis.fetch = vi.fn().mockReturnValue(
+      new Promise((_, reject) => {
+        rejectLate = reject
+      })
+    )
+    const late = render(<Calculator lang="en" />)
+    await waitFor(() => expect(rejectLate).toBeTypeOf('function'))
+    late.unmount()
+    await act(async () => {
+      rejectLate(new Error('late'))
+      await Promise.resolve()
+    })
+  })
+
+  it('clears a failed load on back navigation and shows a non-Error load failure', async () => {
+    vi.stubEnv('VITE_QUOTE_API_URL', 'https://api.example.com')
+    const loadId = 'aaaaaaaa-bbbb-4ccc-8aaa-eeeeeeeeeeee'
+    window.history.replaceState({}, '', `/?load=${loadId}`)
+    globalThis.fetch = vi.fn().mockRejectedValueOnce('offline')
+    render(<Calculator lang="en" />)
+    expect(await screen.findByText(/offline/)).toBeInTheDocument()
+    window.history.replaceState({}, '', '/')
+    window.dispatchEvent(new PopStateEvent('popstate'))
+    await waitFor(() => {
+      expect(screen.queryByText(/Could not load link/i)).not.toBeInTheDocument()
+    })
   })
 })

@@ -4,6 +4,20 @@
  */
 export const changelogEntries = [
   {
+    version: '2.7.15',
+    date: '2026-10-25',
+    titleEn: 'Calculator form and contact handoff covered',
+    titleZh: '计算器表单与联系交接补齐测试',
+    highlightsEn: [
+      'Save-link copy, a cancelled share, save-and-contact, and stale quote responses',
+      'Contact handoff storage, including a full sessionStorage. Lines 97% → 99%',
+    ],
+    highlightsZh: [
+      '复制保存链接、取消分享、保存并联系，以及过期的报价响应',
+      '联系交接存储，含写满的 sessionStorage。行覆盖率 97% → 99%',
+    ],
+  },
+  {
     version: '2.7.14',
     date: '2026-10-25',
     titleEn: 'Proposal, contact, and engagement record covered',

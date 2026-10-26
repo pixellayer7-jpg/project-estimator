@@ -4,6 +4,9 @@ import {
   saveContactHandoff,
   isHandoffOriginCompatible,
   CONTACT_HANDOFF_KEY,
+  saveLastQuoteId,
+  readLastQuoteId,
+  SAVED_QUOTE_ID_KEY,
 } from './contactHandoff.js'
 
 describe('contactHandoff', () => {
@@ -45,6 +48,46 @@ describe('contactHandoff', () => {
       isHandoffOriginCompatible('https://pixellayer7-jpg.github.io/1/')
     ).toBe(true)
     expect(isHandoffOriginCompatible('https://example.com/1/')).toBe(false)
+    expect(isHandoffOriginCompatible('::::')).toBe(false)
     vi.unstubAllGlobals()
+  })
+
+  it('sets English lang and omits quote when no id is passed', () => {
+    const url = new URL(buildLandingContactUrl('https://example.com/1', 'en'))
+    expect(url.searchParams.get('lang')).toBe('en')
+    expect(url.searchParams.get('quote')).toBeNull()
+    expect(url.searchParams.get('utm_medium')).toBe('cta')
+    expect(url.hash).toBe('#contact')
+  })
+
+  it('skips lang when it is neither en nor zh', () => {
+    const url = new URL(buildLandingContactUrl('https://example.com/1/', 'fr'))
+    expect(url.searchParams.has('lang')).toBe(false)
+  })
+
+  it('round-trips the last saved quote id', () => {
+    expect(readLastQuoteId()).toBe('')
+    saveLastQuoteId('abc')
+    expect(sessionStorage.getItem(SAVED_QUOTE_ID_KEY)).toBe('abc')
+    expect(readLastQuoteId()).toBe('abc')
+  })
+
+  it('swallows sessionStorage failures', () => {
+    const setItem = vi
+      .spyOn(Storage.prototype, 'setItem')
+      .mockImplementation(() => {
+        throw new Error('full')
+      })
+    expect(() => saveLastQuoteId('x')).not.toThrow()
+    expect(() => saveContactHandoff({ summary: 'a', lang: 'en' })).not.toThrow()
+    setItem.mockRestore()
+
+    const getItem = vi
+      .spyOn(Storage.prototype, 'getItem')
+      .mockImplementation(() => {
+        throw new Error('blocked')
+      })
+    expect(readLastQuoteId()).toBe('')
+    getItem.mockRestore()
   })
 })
