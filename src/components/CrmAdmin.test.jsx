@@ -2,7 +2,11 @@ import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import CrmAdmin from './CrmAdmin'
-import { acceptQuote, PORTAL_ACCEPT_KEY } from '../utils/portalAcceptStore'
+import {
+  acceptQuote,
+  markDepositSent,
+  PORTAL_ACCEPT_KEY,
+} from '../utils/portalAcceptStore'
 import { saveQuoteRef } from '../utils/storage'
 import { downloadCsv, downloadJson } from '../utils/exportCrm'
 import {
@@ -294,5 +298,40 @@ describe('CrmAdmin', () => {
     await user.click(screen.getByRole('tab', { name: 'Leads' }))
     expect(screen.getByText('No leads yet.')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Refresh all' })).toBeDisabled()
+  })
+
+  it('toggles back to live API and reports a non-Error refresh failure', async () => {
+    vi.stubEnv('VITE_QUOTE_API_URL', 'https://api.example.com')
+    sessionStorage.setItem('pixellayer-admin-token', 'secret')
+    const ok = {
+      ok: true,
+      status: 200,
+      text: async () =>
+        JSON.stringify({
+          items: [],
+          totalQuotes: 0,
+          totalLeads: 0,
+          quotesByStatus: {},
+        }),
+    }
+    globalThis.fetch = vi.fn(async () => ok)
+    const user = userEvent.setup()
+    render(<CrmAdmin lang="en" />)
+    expect(await screen.findByText('Total quotes')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Use demo data' }))
+    expect(screen.getByText('Demo data')).toBeInTheDocument()
+    globalThis.fetch = vi.fn(async () => {
+      throw 'offline'
+    })
+    await user.click(screen.getByRole('button', { name: 'Use live API' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('offline')
+  })
+
+  it('shows the local deposit stage label in Chinese', () => {
+    saveQuoteRef(QUOTE_ID)
+    acceptQuote(QUOTE_ID, { signerName: 'Jamie Chen' })
+    markDepositSent(QUOTE_ID)
+    render(<CrmAdmin lang="zh" />)
+    expect(screen.getByText('已标记定金')).toBeInTheDocument()
   })
 })

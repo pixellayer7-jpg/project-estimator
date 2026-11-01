@@ -4,6 +4,20 @@
  */
 export const changelogEntries = [
   {
+    version: '2.7.16',
+    date: '2026-11-01',
+    titleEn: 'CRM demo store and portal quote paths covered',
+    titleZh: 'CRM 演示存储与门户报价路径补齐测试',
+    highlightsEn: [
+      'Demo CRM storage, corrupt local data, portal quote fallbacks, and accept-stage helpers',
+      'CRM admin toggle back to live API. Lines held at ~99%; gates raised to 99 / 97 / 92 / 98',
+    ],
+    highlightsZh: [
+      '演示 CRM 存储、损坏的本地数据、门户报价回退，以及接受阶段辅助函数',
+      'CRM 管理切回线上 API。行覆盖率保持约 99%；门槛提到 99 / 97 / 92 / 98',
+    ],
+  },
+  {
     version: '2.7.15',
     date: '2026-10-25',
     titleEn: 'Calculator form and contact handoff covered',

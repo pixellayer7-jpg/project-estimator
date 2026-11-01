@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import {
   loadEstimatorForm,
   saveEstimatorForm,
@@ -112,5 +112,62 @@ describe('storage', () => {
   it('loadQuoteRef returns null for malformed stored value', () => {
     localStorage.setItem(REF_KEY, 'not-a-uuid')
     expect(loadQuoteRef()).toBeNull()
+  })
+
+  it('ignores invalid quote refs and storage failures', () => {
+    saveQuoteRef('not-a-uuid')
+    expect(localStorage.getItem(REF_KEY)).toBeNull()
+
+    localStorage.setItem(KEY, JSON.stringify(null))
+    expect(loadEstimatorForm()).toBeNull()
+    localStorage.setItem(
+      KEY,
+      JSON.stringify({
+        projectType: 'landing',
+        addOnIds: 'design',
+        extraSections: 'NaN',
+        clientName: 12,
+      })
+    )
+    expect(loadEstimatorForm()).toEqual({
+      projectType: 'landing',
+      addOnIds: [],
+      extraSections: '0',
+    })
+
+    const boom = vi
+      .spyOn(Storage.prototype, 'getItem')
+      .mockImplementation(() => {
+        throw new Error('blocked')
+      })
+    expect(loadQuoteRef()).toBeNull()
+    expect(loadEstimatorForm()).toBeNull()
+    boom.mockRestore()
+
+    const setItem = vi
+      .spyOn(Storage.prototype, 'setItem')
+      .mockImplementation(() => {
+        throw new Error('quota')
+      })
+    expect(() =>
+      saveQuoteRef('22222222-2222-4222-8222-222222222222')
+    ).not.toThrow()
+    expect(() =>
+      saveEstimatorForm({
+        projectType: 'landing',
+        addOnIds: [],
+        extraSections: '0',
+      })
+    ).not.toThrow()
+    setItem.mockRestore()
+
+    const removeItem = vi
+      .spyOn(Storage.prototype, 'removeItem')
+      .mockImplementation(() => {
+        throw new Error('blocked')
+      })
+    expect(() => clearQuoteRef()).not.toThrow()
+    expect(() => clearEstimatorForm()).not.toThrow()
+    removeItem.mockRestore()
   })
 })

@@ -1,16 +1,18 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, beforeEach } from 'vitest'
 import {
   buildPortalFromQuote,
   buildPortalQuoteUrl,
   buildProposalUrl,
   buildQuoteSchedule,
   resolveQuoteInputFromLocation,
+  sanitizeClientName,
   withDepositMarked,
   withKickoffComplete,
   withQuoteAcceptance,
 } from './portalFromQuote'
 import { calculateQuote } from '../data/pricing'
 import { suggestedFee } from './invoiceGenerator'
+import { saveEstimatorForm, saveQuoteRef } from './storage'
 
 describe('buildPortalQuoteUrl', () => {
   it('encodes quote fields as shareable query params', () => {
@@ -55,6 +57,10 @@ describe('buildProposalUrl', () => {
 })
 
 describe('resolveQuoteInputFromLocation', () => {
+  beforeEach(() => {
+    localStorage.clear()
+  })
+
   it('reads type, extras, ref, and client from the query string', () => {
     const input = resolveQuoteInputFromLocation(
       '?proposal=sow&type=dashboard&extra=4&ref=aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee&client=Globex'
@@ -63,6 +69,23 @@ describe('resolveQuoteInputFromLocation', () => {
     expect(input.extraSections).toBe('4')
     expect(input.quoteRef).toBe('aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee')
     expect(input.clientName).toBe('Globex')
+  })
+
+  it('falls back to the saved calculator form and quote ref', () => {
+    const ref = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
+    saveQuoteRef(ref)
+    saveEstimatorForm({
+      projectType: 'website',
+      addOnIds: ['design'],
+      extraSections: '3',
+      clientName: 'Stored Co',
+    })
+    const input = resolveQuoteInputFromLocation('')
+    expect(input.projectType).toBe('website')
+    expect(input.addOnIds).toEqual(['design'])
+    expect(input.extraSections).toBe('3')
+    expect(input.quoteRef).toBe(ref)
+    expect(input.clientName).toBe('Stored Co')
   })
 })
 
@@ -106,6 +129,53 @@ describe('buildPortalFromQuote', () => {
     })
     expect(rush.dateRange.target < normal.dateRange.target).toBe(true)
   })
+
+  it('falls back for unknown types, marks acceptance, and names the client', () => {
+    const now = new Date('2026-08-17T12:00:00Z')
+    const draft = buildPortalFromQuote({
+      projectType: 'native-app',
+      addOnIds: null,
+      extraSections: 'nope',
+      quoteRef: null,
+      now,
+    })
+    expect(draft.projectName.en).toBe('Landing Page')
+    expect(draft.projectId).toBe('PL-DRAFT')
+    expect(draft.scope.en).toMatch(/base scope/)
+    expect(draft.client.en).toMatch(/Prospective client/)
+
+    const accepted = buildPortalFromQuote({
+      projectType: 'landing',
+      addOnIds: [],
+      extraSections: '2',
+      quoteRef: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',
+      clientName: '  Acme  ',
+      accepted: true,
+      depositSent: true,
+      signerName: 'Jamie Chen',
+      now,
+    })
+    expect(accepted.depositSent).toBe(true)
+    expect(accepted.signerName).toBe('Jamie Chen')
+    expect(accepted.client.en).toBe('Acme')
+    expect(accepted.scope.zh).toContain('2 个额外区块')
+  })
+})
+
+describe('sanitizeClientName and siteBase fallbacks', () => {
+  it('trims client names and recovers from a bad base URL', () => {
+    expect(sanitizeClientName('  Hi  ')).toBe('Hi')
+    expect(sanitizeClientName(null)).toBe('')
+    const url = buildPortalQuoteUrl({
+      base: '::::',
+      projectType: 'landing',
+    })
+    expect(url).toContain('pixellayer7-jpg.github.io/project-estimator')
+    expect(url).toContain('portal=quote')
+    expect(
+      buildProposalUrl({ base: '::::', tab: 'sow', projectType: 'landing' })
+    ).toContain('proposal=sow')
+  })
 })
 
 describe('withQuoteAcceptance', () => {
@@ -127,6 +197,22 @@ describe('withQuoteAcceptance', () => {
       'current'
     )
     expect(accepted.updates[0].author).toBe('Client')
+  })
+
+  it('keeps non-quote projects and records a signer name', () => {
+    expect(withQuoteAcceptance({ source: 'demo' })).toEqual({ source: 'demo' })
+    const project = buildPortalFromQuote({
+      projectType: 'landing',
+      quoteRef: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',
+      now: new Date('2026-08-17T12:00:00Z'),
+    })
+    const signed = withQuoteAcceptance(
+      project,
+      new Date('2026-08-17T12:00:00Z'),
+      { signerName: '  Riley  ' }
+    )
+    expect(signed.signerName).toBe('Riley')
+    expect(signed.updates[0].body.en).toContain('Riley')
   })
 })
 
