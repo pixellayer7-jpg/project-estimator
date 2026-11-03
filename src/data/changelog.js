@@ -4,6 +4,20 @@
  */
 export const changelogEntries = [
   {
+    version: '2.7.17',
+    date: '2026-11-03',
+    titleEn: 'CRM admin remaining paths covered',
+    titleZh: 'CRM 管理剩余路径补齐测试',
+    highlightsEn: [
+      'Lead CSV export, cleared-token guards, lead PATCH failures, and broken session storage',
+      'CrmAdmin at 100% lines. Repo lines ~99.6%; statement gate raised to 98%',
+    ],
+    highlightsZh: [
+      '线索 CSV 导出、清空 token 后的防护、线索 PATCH 失败，以及损坏的 sessionStorage',
+      'CrmAdmin 行覆盖率 100%。全仓行约 99.6%；语句门槛提到 98%',
+    ],
+  },
+  {
     version: '2.7.16',
     date: '2026-11-01',
     titleEn: 'CRM demo store and portal quote paths covered',

@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import CrmAdmin from './CrmAdmin'
 import {
@@ -333,5 +333,236 @@ describe('CrmAdmin', () => {
     markDepositSent(QUOTE_ID)
     render(<CrmAdmin lang="zh" />)
     expect(screen.getByText('已标记定金')).toBeInTheDocument()
+  })
+
+  it('shows the empty local engagement hint and Chinese signed count', () => {
+    vi.stubEnv('VITE_QUOTE_API_URL', '')
+    render(<CrmAdmin lang="en" />)
+    expect(
+      screen.getByText(/No signed quote in this browser yet/i)
+    ).toBeInTheDocument()
+    cleanup()
+
+    const second = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
+    saveQuoteRef(QUOTE_ID)
+    acceptQuote(QUOTE_ID, { signerName: 'Jamie Chen' })
+    acceptQuote(second, { signerName: 'Riley' })
+    render(<CrmAdmin lang="zh" />)
+    expect(screen.getByText('本浏览器共 2 条已签署报价')).toBeInTheDocument()
+  })
+
+  it('exports leads CSV and ignores status changes when the token is cleared', async () => {
+    vi.stubEnv('VITE_QUOTE_API_URL', 'https://api.example.com')
+    sessionStorage.setItem('pixellayer-admin-token', 'secret')
+    const quote = {
+      id: 'a1111111-1111-4111-8111-111111111111',
+      createdAt: '2026-10-01T00:00:00.000Z',
+      projectType: 'landing',
+      min: 10,
+      max: 20,
+      status: 'draft',
+    }
+    const lead = {
+      id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+      createdAt: '2026-10-02T00:00:00.000Z',
+      name: 'Casey',
+      email: 'casey@example.com',
+      source: 'landing',
+      status: 'new',
+      quoteRef: quote.id,
+    }
+    globalThis.fetch = vi.fn(async (url, init) => {
+      if (init?.method === 'PATCH') {
+        return { ok: true, status: 200, text: async () => '{}' }
+      }
+      const path = String(url)
+      const body = path.includes('/leads')
+        ? { items: [lead] }
+        : path.includes('/quotes')
+          ? { items: [quote] }
+          : { totalQuotes: 1, totalLeads: 1, quotesByStatus: { draft: 1 } }
+      return { ok: true, status: 200, text: async () => JSON.stringify(body) }
+    })
+    const user = userEvent.setup()
+    render(<CrmAdmin lang="en" />)
+    await user.click(await screen.findByRole('tab', { name: 'Leads' }))
+    expect(await screen.findByText('Casey')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Export CSV' }))
+    expect(downloadCsv).toHaveBeenCalledWith(
+      'pixelayer-leads.csv',
+      expect.any(Array)
+    )
+
+    await user.clear(screen.getByLabelText('Bearer token'))
+    const before = globalThis.fetch.mock.calls.length
+    await user.click(screen.getByRole('tab', { name: 'Quotes' }))
+    await user.selectOptions(
+      screen.getByRole('combobox', { name: new RegExp(`Status ${quote.id}`) }),
+      'sent'
+    )
+    await user.click(screen.getByRole('tab', { name: 'Leads' }))
+    await user.selectOptions(
+      screen.getByRole('combobox', { name: new RegExp(`Status ${lead.id}`) }),
+      'closed'
+    )
+    const patchCalls = globalThis.fetch.mock.calls
+      .slice(before)
+      .filter((call) => call[1]?.method === 'PATCH')
+    expect(patchCalls).toHaveLength(0)
+  })
+
+  it('reports a failed lead status update and a typed refresh error', async () => {
+    vi.stubEnv('VITE_QUOTE_API_URL', 'https://api.example.com')
+    sessionStorage.setItem('pixellayer-admin-token', 'secret')
+    const lead = {
+      id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+      createdAt: '2026-10-02T00:00:00.000Z',
+      name: 'Casey',
+      email: 'casey@example.com',
+      source: 'calculator',
+      status: 'new',
+    }
+    globalThis.fetch = vi.fn(async (url, init) => {
+      if (init?.method === 'PATCH') {
+        return {
+          ok: false,
+          status: 500,
+          text: async () => JSON.stringify({ error: 'Lead locked' }),
+        }
+      }
+      const path = String(url)
+      const body = path.includes('/leads')
+        ? { items: [lead] }
+        : path.includes('/quotes')
+          ? { items: [] }
+          : { totalQuotes: 0, totalLeads: 1, leadsByStatus: { new: 1 } }
+      return { ok: true, status: 200, text: async () => JSON.stringify(body) }
+    })
+    const user = userEvent.setup()
+    render(<CrmAdmin lang="en" />)
+    await user.click(await screen.findByRole('tab', { name: 'Leads' }))
+    await user.selectOptions(
+      await screen.findByRole('combobox', { name: new RegExp(lead.id) }),
+      'qualified'
+    )
+    expect(await screen.findByRole('alert')).toHaveTextContent('Lead locked')
+
+    globalThis.fetch = vi.fn(async () => {
+      throw new Error('network down')
+    })
+    await user.click(screen.getByRole('button', { name: 'Refresh all' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('network down')
+  })
+
+  it('tolerates broken session storage and non-array live payloads', async () => {
+    vi.stubEnv('VITE_QUOTE_API_URL', 'https://api.example.com')
+    const getItem = vi
+      .spyOn(Storage.prototype, 'getItem')
+      .mockImplementation(function (key) {
+        if (key === 'pixellayer-admin-token') throw new Error('blocked')
+        return null
+      })
+    render(<CrmAdmin lang="en" />)
+    expect(screen.getByLabelText('Bearer token')).toHaveValue('')
+    getItem.mockRestore()
+    cleanup()
+
+    sessionStorage.setItem('pixellayer-admin-token', 'secret')
+    globalThis.fetch = vi.fn(async (url) => {
+      const path = String(url)
+      const body = path.includes('/leads')
+        ? { items: null }
+        : path.includes('/quotes')
+          ? { items: 'nope' }
+          : { totalQuotes: 0, totalLeads: 0 }
+      return { ok: true, status: 200, text: async () => JSON.stringify(body) }
+    })
+    render(<CrmAdmin lang="en" />)
+    expect(await screen.findByText('Total quotes')).toBeInTheDocument()
+    await userEvent.setup().click(screen.getByRole('tab', { name: 'Quotes' }))
+    expect(screen.getByText('No quotes yet.')).toBeInTheDocument()
+  })
+
+  it('swallows a full sessionStorage when saving the token', async () => {
+    vi.stubEnv('VITE_QUOTE_API_URL', 'https://api.example.com')
+    const setItem = vi
+      .spyOn(Storage.prototype, 'setItem')
+      .mockImplementation(() => {
+        throw new Error('quota')
+      })
+    const user = userEvent.setup()
+    render(<CrmAdmin lang="en" />)
+    await user.type(screen.getByLabelText('Bearer token'), 'secret')
+    await user.click(screen.getByRole('button', { name: 'Save token' }))
+    expect(
+      screen.getByRole('button', { name: 'Save token' })
+    ).toBeInTheDocument()
+    setItem.mockRestore()
+  })
+
+  it('falls back when demo detection cannot read the URL', () => {
+    vi.stubEnv('VITE_QUOTE_API_URL', 'https://api.example.com')
+    const original = window.location
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      get() {
+        throw new Error('no location')
+      },
+    })
+    try {
+      render(<CrmAdmin lang="en" />)
+      expect(screen.getByLabelText('Bearer token')).toBeInTheDocument()
+      expect(screen.queryByText('Demo data')).not.toBeInTheDocument()
+    } finally {
+      Object.defineProperty(window, 'location', {
+        configurable: true,
+        value: original,
+      })
+    }
+  })
+
+  it('renders live rows that omit status and add-ons', async () => {
+    vi.stubEnv('VITE_QUOTE_API_URL', 'https://api.example.com')
+    sessionStorage.setItem('pixellayer-admin-token', 'secret')
+    const quote = {
+      id: 'a1111111-1111-4111-8111-111111111111',
+      createdAt: '2026-10-01T00:00:00.000Z',
+      projectType: 'website',
+      min: 100,
+      max: 200,
+    }
+    const lead = {
+      id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+      createdAt: '2026-10-02T00:00:00.000Z',
+      name: 'No Status',
+      email: 'none@example.com',
+      source: 'landing',
+    }
+    globalThis.fetch = vi.fn(async (url) => {
+      const path = String(url)
+      const body = path.includes('/leads')
+        ? { items: [lead] }
+        : path.includes('/quotes')
+          ? { items: [quote] }
+          : { totalQuotes: 1, totalLeads: 1 }
+      return { ok: true, status: 200, text: async () => JSON.stringify(body) }
+    })
+    const user = userEvent.setup()
+    render(<CrmAdmin lang="en" />)
+    await user.click(await screen.findByRole('tab', { name: 'Quotes' }))
+    expect(
+      screen.getByRole('combobox', { name: new RegExp(`Status ${quote.id}`) })
+    ).toHaveValue('draft')
+    const proposal = screen
+      .getAllByRole('link', { name: /^Proposal$/i })
+      .find((a) => a.getAttribute('href')?.includes('type=website'))
+    expect(proposal).toHaveAttribute(
+      'href',
+      expect.stringContaining('proposal=sow')
+    )
+    await user.click(screen.getByRole('tab', { name: 'Leads' }))
+    expect(
+      screen.getByRole('combobox', { name: new RegExp(`Status ${lead.id}`) })
+    ).toHaveValue('new')
   })
 })

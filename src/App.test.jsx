@@ -63,10 +63,10 @@ describe('App', () => {
     expect(
       screen.getByRole('heading', { name: /^Changelog$/ })
     ).toBeInTheDocument()
-    expect(screen.getByText(/^v2\.7\.16$/)).toBeInTheDocument()
+    expect(screen.getByText(/^v2\.7\.17$/)).toBeInTheDocument()
     expect(
       screen.getByRole('heading', {
-        name: /CRM demo store and portal quote paths covered/,
+        name: /CRM admin remaining paths covered/,
       })
     ).toBeInTheDocument()
   })
