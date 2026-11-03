@@ -4,6 +4,20 @@
  */
 export const changelogEntries = [
   {
+    version: '2.7.18',
+    date: '2026-11-03',
+    titleEn: 'App routing, proposal, and calculator leftovers covered',
+    titleZh: '应用路由、提案与计算器剩余路径补齐测试',
+    highlightsEn: [
+      'Admin / proposal / portal routing, language bootstrap, SOW tab switch, and calculator link copy',
+      'Proposal and Calculator at 100% lines; functions 100%. Gates: branches 93%, functions 100%',
+    ],
+    highlightsZh: [
+      '管理 / 提案 / 门户路由、语言启动、SOW 页签切换，以及计算器链接复制',
+      '提案与计算器行覆盖率 100%；函数 100%。门槛：分支 93%、函数 100%',
+    ],
+  },
+  {
     version: '2.7.17',
     date: '2026-11-03',
     titleEn: 'CRM admin remaining paths covered',

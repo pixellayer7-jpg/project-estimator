@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest'
-import { act, render, screen } from '@testing-library/react'
+import { act, cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import Proposal from './Proposal'
 import { PORTAL_ACCEPT_KEY, isQuoteAccepted } from '../utils/portalAcceptStore'
@@ -159,6 +159,43 @@ describe('Proposal', () => {
     )
     expect(downloads.some((name) => name.endsWith('.json'))).toBe(true)
     expect(downloads.some((name) => name.endsWith('.md'))).toBe(true)
+  })
+
+  it('switches back to the SOW tab and shows a pre-accepted signature', async () => {
+    const user = userEvent.setup()
+    render(<Proposal lang="en" quoteInput={quoteInput} initialTab="invoice" />)
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'Deposit invoice' })
+    ).toBeInTheDocument()
+    await user.click(screen.getByRole('tab', { name: /Statement of Work/i }))
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'Statement of Work' })
+    ).toBeInTheDocument()
+    expect(window.location.search).toContain('proposal=sow')
+    cleanup()
+
+    localStorage.setItem(
+      PORTAL_ACCEPT_KEY,
+      JSON.stringify({
+        [quoteInput.quoteRef]: {
+          acceptedAt: '2026-11-01T00:00:00.000Z',
+          signerName: 'Jamie Chen',
+        },
+      })
+    )
+    render(<Proposal lang="en" quoteInput={quoteInput} />)
+    expect(screen.getByText('Scope accepted')).toBeInTheDocument()
+    expect(screen.getAllByText('Jamie Chen').length).toBeGreaterThan(0)
+  })
+
+  it('uses empty quote defaults for a Chinese SOW', () => {
+    render(<Proposal lang="zh" quoteInput={{}} />)
+    expect(
+      screen.getByRole('heading', { level: 1, name: '工作说明书' })
+    ).toBeInTheDocument()
+    expect(screen.getAllByText('客户法定名称').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('落地页').length).toBeGreaterThan(0)
+    expect(screen.getByText('无')).toBeInTheDocument()
   })
 
   it('shows a copy failure and still accepts when navigation throws', async () => {

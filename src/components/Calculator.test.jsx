@@ -45,14 +45,23 @@ describe('Calculator', () => {
   it('toggles add-on and updates estimate', async () => {
     const user = userEvent.setup()
     render(<Calculator lang="en" />)
-    await user.click(
-      screen.getByRole('checkbox', {
-        name: /Design from scratch/i,
-      })
+    const design = screen.getByRole('checkbox', {
+      name: /Design from scratch/i,
+    })
+    await user.click(design)
+    expect(document.querySelector('.calc-result-value')).toHaveTextContent(
+      /\$1,?000/
     )
-    const value = document.querySelector('.calc-result-value')
-    expect(value).toHaveTextContent(/\$1,?000/)
-    expect(value).toHaveTextContent(/1,?500/)
+    expect(document.querySelector('.calc-result-value')).toHaveTextContent(
+      /1,?500/
+    )
+    await user.click(design)
+    expect(document.querySelector('.calc-result-value')).toHaveTextContent(
+      /\$800/
+    )
+    expect(document.querySelector('.calc-result-value')).toHaveTextContent(
+      /1,?200/
+    )
   })
 
   it('clamps extra sections on blur', async () => {
@@ -626,6 +635,46 @@ describe('Calculator', () => {
       .mockRejectedValue(new Error('denied'))
     await user.click(copy)
     expect(copy).toHaveTextContent('Copy link')
+  })
+
+  it('copies the calculator load link and shows success feedback', async () => {
+    vi.stubEnv('VITE_QUOTE_API_URL', 'https://api.example.com')
+    vi.stubEnv('VITE_SITE_URL', 'https://calc.example.com')
+    const id = 'aaaaaaaa-bbbb-4ccc-8aaa-eeeeeeeeeeee'
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 201,
+      text: async () =>
+        JSON.stringify({
+          id,
+          createdAt: '2026-01-01T00:00:00.000Z',
+        }),
+    })
+    const resets = []
+    const real = window.setTimeout.bind(window)
+    vi.spyOn(window, 'setTimeout').mockImplementation((fn, ms, ...args) => {
+      if (ms === 2000) {
+        resets.push(fn)
+        return 1
+      }
+      return real(fn, ms, ...args)
+    })
+    const user = userEvent.setup()
+    render(<Calculator lang="en" />)
+    await user.click(screen.getByRole('button', { name: /save online copy/i }))
+    const copyCalc = await screen.findByRole('button', {
+      name: /Copy calculator URL with \?load=/i,
+    })
+    navigator.clipboard.writeText = vi.fn().mockResolvedValue(undefined)
+    await user.click(copyCalc)
+    expect(copyCalc).toHaveTextContent('Calculator link copied!')
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+      `https://calc.example.com/?load=${id}`
+    )
+    await act(() => {
+      resets.at(-1)()
+    })
+    expect(copyCalc).toHaveTextContent('Copy calculator link')
   })
 
   it('keeps the calculator link when copying it fails, and ignores a cancelled share', async () => {

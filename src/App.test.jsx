@@ -63,10 +63,10 @@ describe('App', () => {
     expect(
       screen.getByRole('heading', { name: /^Changelog$/ })
     ).toBeInTheDocument()
-    expect(screen.getByText(/^v2\.7\.17$/)).toBeInTheDocument()
+    expect(screen.getByText(/^v2\.7\.18$/)).toBeInTheDocument()
     expect(
       screen.getByRole('heading', {
-        name: /CRM admin remaining paths covered/,
+        name: /App routing, proposal, and calculator leftovers covered/,
       })
     ).toBeInTheDocument()
   })
@@ -158,5 +158,94 @@ describe('App', () => {
       expect(document.documentElement.lang).toBe('zh-CN')
     })
     expect(localStorage.getItem(LANG_KEY)).toBe('zh')
+  })
+
+  it('opens CRM admin from ?admin=1 and from #admin', async () => {
+    window.history.replaceState({}, '', '/?admin=1')
+    const first = render(<App />)
+    expect(
+      await screen.findByRole('heading', { name: /CRM admin/i })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('link', { name: /Skip to calculator|Skip to/i })
+    ).toBeTruthy()
+    first.unmount()
+
+    window.history.replaceState({}, '', '/#admin')
+    render(<App />)
+    expect(
+      await screen.findByRole('heading', { name: /CRM admin/i })
+    ).toBeInTheDocument()
+  })
+
+  it('treats ?proposal=1 as SOW and ?proposal=invoice as the invoice tab', async () => {
+    window.history.replaceState({}, '', '/?proposal=1&type=landing')
+    const sow = render(<App />)
+    expect(
+      await screen.findByRole('heading', {
+        level: 1,
+        name: 'Statement of Work',
+      })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('link', { name: 'Skip to proposal' })
+    ).toBeInTheDocument()
+    sow.unmount()
+
+    window.history.replaceState({}, '', '/?proposal=invoice&lang=zh')
+    render(<App />)
+    expect(
+      await screen.findByRole('heading', { level: 1, name: '定金发票' })
+    ).toBeInTheDocument()
+    expect(document.title).toMatch(/客户提案/)
+    expect(screen.getByRole('link', { name: '跳到提案' })).toBeInTheDocument()
+  })
+
+  it('reads language from the query string or localStorage, and survives storage errors', async () => {
+    window.history.replaceState({}, '', '/?lang=zh')
+    const fromQuery = render(<App />)
+    expect(document.documentElement.lang).toBe('zh-CN')
+    expect(screen.getByRole('link', { name: '跳到计算器' })).toBeInTheDocument()
+    fromQuery.unmount()
+
+    window.history.replaceState({}, '', '/')
+    localStorage.setItem(LANG_KEY, 'zh')
+    const fromStore = render(<App />)
+    expect(document.documentElement.lang).toBe('zh-CN')
+    fromStore.unmount()
+
+    localStorage.setItem(LANG_KEY, 'nope')
+    render(<App />)
+    expect(document.documentElement.lang).toBe('en')
+
+    const setItem = vi
+      .spyOn(Storage.prototype, 'setItem')
+      .mockImplementation(() => {
+        throw new Error('quota')
+      })
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: /^中文$/ }))
+    expect(document.documentElement.lang).toBe('zh-CN')
+    setItem.mockRestore()
+  })
+
+  it('uses Chinese skip copy on the quote portal', async () => {
+    window.history.replaceState({}, '', '/?portal=quote&type=landing&lang=zh')
+    render(<App />)
+    expect(
+      await screen.findByRole('link', { name: '跳到项目状态' })
+    ).toBeInTheDocument()
+    expect(document.title).toMatch(/客户项目状态/)
+  })
+
+  it('survives a blocked language read from localStorage', () => {
+    const getItem = vi
+      .spyOn(Storage.prototype, 'getItem')
+      .mockImplementation(() => {
+        throw new Error('blocked')
+      })
+    render(<App />)
+    expect(document.documentElement.lang).toBe('en')
+    getItem.mockRestore()
   })
 })
