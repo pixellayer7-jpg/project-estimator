@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   getStats,
   listLeadsRecent,
@@ -35,9 +35,21 @@ const TOKEN_KEY = 'pixellayer-admin-token'
 const QUOTE_STATUSES = ['draft', 'sent', 'accepted', 'declined']
 const LEAD_STATUSES = ['new', 'contacted', 'qualified', 'closed']
 const TABS = ['stats', 'quotes', 'leads']
+const PAGE_SIZE = 20
 
 function errorMessage(e) {
   return e instanceof Error ? e.message : String(e)
+}
+
+function pageRows(rows, status, offset, limit, fallbackStatus) {
+  let filtered = Array.isArray(rows) ? rows : []
+  if (status) {
+    filtered = filtered.filter((r) => (r.status || fallbackStatus) === status)
+  }
+  return {
+    items: filtered.slice(offset, offset + limit),
+    total: filtered.length,
+  }
 }
 
 function detectForcedDemo() {
@@ -65,8 +77,29 @@ export default function CrmAdmin({ lang }) {
     }
   })
   const [tab, setTab] = useState('stats')
-  const [quotes, setQuotes] = useState(initialDemo?.quotes ?? [])
-  const [leads, setLeads] = useState(initialDemo?.leads ?? [])
+  const [quoteStatus, setQuoteStatus] = useState('')
+  const [leadStatus, setLeadStatus] = useState('')
+  const [quoteOffset, setQuoteOffset] = useState(0)
+  const [leadOffset, setLeadOffset] = useState(0)
+  const [quoteTotal, setQuoteTotal] = useState(
+    () => initialDemo?.quotes?.length ?? 0
+  )
+  const [leadTotal, setLeadTotal] = useState(
+    () => initialDemo?.leads?.length ?? 0
+  )
+  const demoFullRef = useRef(initialDemo)
+
+  const [quotes, setQuotes] = useState(() =>
+    initialDemo
+      ? pageRows(initialDemo.quotes, '', 0, PAGE_SIZE, 'draft').items
+      : []
+  )
+  const [leads, setLeads] = useState(() =>
+    initialDemo
+      ? pageRows(initialDemo.leads, '', 0, PAGE_SIZE, 'new').items
+      : []
+  )
+  const [joinLeads, setJoinLeads] = useState(initialDemo?.leads ?? [])
   const [stats, setStats] = useState(() =>
     initialDemo ? demoStatsFromState(initialDemo) : null
   )
@@ -99,6 +132,11 @@ export default function CrmAdmin({ lang }) {
         emptyQuotes: 'No quotes yet.',
         emptyLeads: 'No leads yet.',
         status: 'Status',
+        filterAll: 'All statuses',
+        prevPage: 'Previous',
+        nextPage: 'Next',
+        pageOf: (from, to, total) =>
+          total === 0 ? '0 of 0' : `${from}–${to} of ${total}`,
         range: 'Range',
         type: 'Type',
         created: 'Created',
@@ -144,6 +182,11 @@ export default function CrmAdmin({ lang }) {
         emptyQuotes: '暂无报价。',
         emptyLeads: '暂无线索。',
         status: '状态',
+        filterAll: '全部状态',
+        prevPage: '上一页',
+        nextPage: '下一页',
+        pageOf: (from, to, total) =>
+          total === 0 ? '0 / 0' : `${from}–${to} / ${total}`,
         range: '区间',
         type: '类型',
         created: '创建时间',
@@ -166,14 +209,39 @@ export default function CrmAdmin({ lang }) {
         downloadMd: 'Markdown',
       }
 
-  const leadsByRef = useMemo(() => indexLeadsByQuoteRef(leads), [leads])
+  const leadsByRef = useMemo(() => indexLeadsByQuoteRef(joinLeads), [joinLeads])
 
-  const applyDemoState = useCallback((state) => {
-    setQuotes(state.quotes)
-    setLeads(state.leads)
-    setStats(demoStatsFromState(state))
-    setError('')
-  }, [])
+  const applyDemoState = useCallback(
+    (state, overrides = {}) => {
+      const nextQuoteStatus = overrides.quoteStatus ?? quoteStatus
+      const nextQuoteOffset = overrides.quoteOffset ?? quoteOffset
+      const nextLeadStatus = overrides.leadStatus ?? leadStatus
+      const nextLeadOffset = overrides.leadOffset ?? leadOffset
+      demoFullRef.current = state
+      setStats(demoStatsFromState(state))
+      setJoinLeads(state.leads)
+      const q = pageRows(
+        state.quotes,
+        nextQuoteStatus,
+        nextQuoteOffset,
+        PAGE_SIZE,
+        'draft'
+      )
+      const l = pageRows(
+        state.leads,
+        nextLeadStatus,
+        nextLeadOffset,
+        PAGE_SIZE,
+        'new'
+      )
+      setQuotes(q.items)
+      setLeads(l.items)
+      setQuoteTotal(q.total)
+      setLeadTotal(l.total)
+      setError('')
+    },
+    [quoteStatus, quoteOffset, leadStatus, leadOffset]
+  )
 
   const refreshDemo = useCallback(() => {
     applyDemoState(loadCrmDemoState())
@@ -181,24 +249,40 @@ export default function CrmAdmin({ lang }) {
 
   const fetchLive = useCallback(async () => {
     const tok = token.trim()
-    const [statsData, quotesData, leadsData] = await Promise.all([
+    const empty = { items: [], total: 0 }
+    const [statsData, quotesData, leadsData, joinData] = await Promise.all([
       getStats(apiBase),
       tok
-        ? listQuotesRecent(apiBase, tok, 100)
-        : Promise.resolve({ items: [] }),
-      tok ? listLeadsRecent(apiBase, tok, 100) : Promise.resolve({ items: [] }),
+        ? listQuotesRecent(apiBase, tok, PAGE_SIZE, {
+            offset: quoteOffset,
+            status: quoteStatus || undefined,
+          })
+        : Promise.resolve(empty),
+      tok
+        ? listLeadsRecent(apiBase, tok, PAGE_SIZE, {
+            offset: leadOffset,
+            status: leadStatus || undefined,
+          })
+        : Promise.resolve(empty),
+      tok ? listLeadsRecent(apiBase, tok, 100) : Promise.resolve(empty),
     ])
     return {
       stats: statsData,
       quotes: Array.isArray(quotesData.items) ? quotesData.items : [],
       leads: Array.isArray(leadsData.items) ? leadsData.items : [],
+      joinLeads: Array.isArray(joinData.items) ? joinData.items : [],
+      quoteTotal: Number(quotesData.total) || 0,
+      leadTotal: Number(leadsData.total) || 0,
     }
-  }, [apiBase, token])
+  }, [apiBase, token, quoteOffset, quoteStatus, leadOffset, leadStatus])
 
   const applyLive = useCallback((data) => {
     setStats(data.stats)
     setQuotes(data.quotes)
     setLeads(data.leads)
+    setJoinLeads(data.joinLeads)
+    setQuoteTotal(data.quoteTotal)
+    setLeadTotal(data.leadTotal)
     setError('')
   }, [])
 
@@ -215,7 +299,10 @@ export default function CrmAdmin({ lang }) {
     }
   }, [apiBase, fetchLive, applyLive])
 
-  const liveKey = !useDemo && apiBase && token ? `${apiBase}\n${token}` : null
+  const liveKey =
+    !useDemo && apiBase && token
+      ? `${apiBase}\n${token}\n${quoteStatus}\n${quoteOffset}\n${leadStatus}\n${leadOffset}`
+      : null
   const [liveLoadedKey, setLiveLoadedKey] = useState(null)
   const busy = loading || (liveKey !== null && liveLoadedKey !== liveKey)
 
@@ -251,7 +338,8 @@ export default function CrmAdmin({ lang }) {
 
   function handleQuoteStatus(id, status) {
     if (useDemo) {
-      applyDemoState(patchDemoQuoteStatus({ quotes, leads }, id, status))
+      const full = demoFullRef.current || loadCrmDemoState()
+      applyDemoState(patchDemoQuoteStatus(full, id, status))
       return
     }
     if (!apiBase || !token) return
@@ -267,7 +355,8 @@ export default function CrmAdmin({ lang }) {
 
   function handleLeadStatus(id, status) {
     if (useDemo) {
-      applyDemoState(patchDemoLeadStatus({ quotes, leads }, id, status))
+      const full = demoFullRef.current || loadCrmDemoState()
+      applyDemoState(patchDemoLeadStatus(full, id, status))
       return
     }
     if (!apiBase || !token) return
@@ -279,6 +368,44 @@ export default function CrmAdmin({ lang }) {
         setError(errorMessage(e))
       }
     })()
+  }
+
+  function handleQuoteFilterChange(next) {
+    setQuoteStatus(next)
+    setQuoteOffset(0)
+    if (useDemo) {
+      applyDemoState(loadCrmDemoState(), {
+        quoteStatus: next,
+        quoteOffset: 0,
+      })
+    }
+  }
+
+  function handleLeadFilterChange(next) {
+    setLeadStatus(next)
+    setLeadOffset(0)
+    if (useDemo) {
+      applyDemoState(loadCrmDemoState(), {
+        leadStatus: next,
+        leadOffset: 0,
+      })
+    }
+  }
+
+  function handleQuotePage(delta) {
+    const next = Math.max(0, quoteOffset + delta)
+    setQuoteOffset(next)
+    if (useDemo) {
+      applyDemoState(loadCrmDemoState(), { quoteOffset: next })
+    }
+  }
+
+  function handleLeadPage(delta) {
+    const next = Math.max(0, leadOffset + delta)
+    setLeadOffset(next)
+    if (useDemo) {
+      applyDemoState(loadCrmDemoState(), { leadOffset: next })
+    }
   }
 
   function handleResetDemo() {
@@ -533,23 +660,75 @@ export default function CrmAdmin({ lang }) {
 
         {tab === 'quotes' ? (
           <>
-            <div className="crm-admin-export">
-              <button
-                type="button"
-                className="btn btn-outline"
-                disabled={!quotes.length}
-                onClick={() => downloadJson('pixelayer-quotes.json', quotes)}
-              >
-                {t.exportJson}
-              </button>
-              <button
-                type="button"
-                className="btn btn-outline"
-                disabled={!quotes.length}
-                onClick={() => downloadCsv('pixelayer-quotes.csv', quotes)}
-              >
-                {t.exportCsv}
-              </button>
+            <div className="crm-admin-toolbar">
+              <label className="crm-admin-filter">
+                <span>{t.status}</span>
+                <select
+                  value={quoteStatus}
+                  onChange={(e) => handleQuoteFilterChange(e.target.value)}
+                  aria-label={t.status}
+                >
+                  <option value="">{t.filterAll}</option>
+                  {QUOTE_STATUSES.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="crm-admin-pager">
+                <span>
+                  {t.pageOf(
+                    quoteTotal === 0 ? 0 : quoteOffset + 1,
+                    Math.min(quoteOffset + quotes.length, quoteTotal),
+                    quoteTotal
+                  )}
+                </span>
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  disabled={quoteOffset <= 0 || busy}
+                  onClick={() => handleQuotePage(-PAGE_SIZE)}
+                >
+                  {t.prevPage}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  disabled={quoteOffset + PAGE_SIZE >= quoteTotal || busy}
+                  onClick={() => handleQuotePage(PAGE_SIZE)}
+                >
+                  {t.nextPage}
+                </button>
+              </div>
+              <div className="crm-admin-export">
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  disabled={!quotes.length}
+                  onClick={() =>
+                    downloadJson(
+                      'pixelayer-quotes.json',
+                      useDemo ? demoFullRef.current?.quotes || quotes : quotes
+                    )
+                  }
+                >
+                  {t.exportJson}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  disabled={!quotes.length}
+                  onClick={() =>
+                    downloadCsv(
+                      'pixelayer-quotes.csv',
+                      useDemo ? demoFullRef.current?.quotes || quotes : quotes
+                    )
+                  }
+                >
+                  {t.exportCsv}
+                </button>
+              </div>
             </div>
             {quotes.length === 0 && !busy ? (
               <p>{t.emptyQuotes}</p>
@@ -643,23 +822,75 @@ export default function CrmAdmin({ lang }) {
 
         {tab === 'leads' ? (
           <>
-            <div className="crm-admin-export">
-              <button
-                type="button"
-                className="btn btn-outline"
-                disabled={!leads.length}
-                onClick={() => downloadJson('pixelayer-leads.json', leads)}
-              >
-                {t.exportJson}
-              </button>
-              <button
-                type="button"
-                className="btn btn-outline"
-                disabled={!leads.length}
-                onClick={() => downloadCsv('pixelayer-leads.csv', leads)}
-              >
-                {t.exportCsv}
-              </button>
+            <div className="crm-admin-toolbar">
+              <label className="crm-admin-filter">
+                <span>{t.status}</span>
+                <select
+                  value={leadStatus}
+                  onChange={(e) => handleLeadFilterChange(e.target.value)}
+                  aria-label={t.status}
+                >
+                  <option value="">{t.filterAll}</option>
+                  {LEAD_STATUSES.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="crm-admin-pager">
+                <span>
+                  {t.pageOf(
+                    leadTotal === 0 ? 0 : leadOffset + 1,
+                    Math.min(leadOffset + leads.length, leadTotal),
+                    leadTotal
+                  )}
+                </span>
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  disabled={leadOffset <= 0 || busy}
+                  onClick={() => handleLeadPage(-PAGE_SIZE)}
+                >
+                  {t.prevPage}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  disabled={leadOffset + PAGE_SIZE >= leadTotal || busy}
+                  onClick={() => handleLeadPage(PAGE_SIZE)}
+                >
+                  {t.nextPage}
+                </button>
+              </div>
+              <div className="crm-admin-export">
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  disabled={!leads.length}
+                  onClick={() =>
+                    downloadJson(
+                      'pixelayer-leads.json',
+                      useDemo ? demoFullRef.current?.leads || leads : leads
+                    )
+                  }
+                >
+                  {t.exportJson}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  disabled={!leads.length}
+                  onClick={() =>
+                    downloadCsv(
+                      'pixelayer-leads.csv',
+                      useDemo ? demoFullRef.current?.leads || leads : leads
+                    )
+                  }
+                >
+                  {t.exportCsv}
+                </button>
+              </div>
             </div>
             {leads.length === 0 && !busy ? (
               <p>{t.emptyLeads}</p>

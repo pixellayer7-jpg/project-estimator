@@ -162,6 +162,13 @@ describe('quoteApi CRM endpoints', () => {
       method: 'GET',
     },
     {
+      name: 'listQuotesRecent with status/offset',
+      call: (token) =>
+        listQuotesRecent(BASE, token, 5, { offset: 10, status: 'sent' }),
+      url: `${BASE}/api/v1/quotes?limit=5&offset=10&status=sent`,
+      method: 'GET',
+    },
+    {
       name: 'listLeadsRecent',
       call: (token) => listLeadsRecent(BASE, token),
       url: `${BASE}/api/v1/leads?limit=50`,

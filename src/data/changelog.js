@@ -4,6 +4,20 @@
  */
 export const changelogEntries = [
   {
+    version: '2.7.19',
+    date: '2026-11-17',
+    titleEn: 'CRM list status filter and pagination',
+    titleZh: 'CRM 列表按状态筛选与分页',
+    highlightsEn: [
+      'Quotes/leads tabs: status filter, previous/next page (20 per page)',
+      'Live API uses estimator-api offset/status query params; demo mode pages locally',
+    ],
+    highlightsZh: [
+      '报价/线索页：状态筛选、上一页/下一页（每页 20 条）',
+      '线上 API 使用 estimator-api 的 offset/status；演示模式本地分页',
+    ],
+  },
+  {
     version: '2.7.18',
     date: '2026-11-03',
     titleEn: 'App routing, proposal, and calculator leftovers covered',

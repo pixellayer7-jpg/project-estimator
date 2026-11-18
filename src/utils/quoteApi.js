@@ -118,8 +118,12 @@ export async function listQuotesRecent(
   limit = 20,
   options = {}
 ) {
-  const { signal } = options
-  const url = `${baseUrl}/api/v1/quotes?limit=${encodeURIComponent(String(limit))}`
+  const { signal, offset = 0, status } = options
+  const params = new URLSearchParams()
+  params.set('limit', String(limit))
+  if (offset) params.set('offset', String(offset))
+  if (status) params.set('status', String(status))
+  const url = `${baseUrl}/api/v1/quotes?${params}`
   const headers = { Accept: 'application/json' }
   if (token) headers.Authorization = `Bearer ${token}`
   const res = await fetch(url, { method: 'GET', headers, signal })
@@ -213,8 +217,12 @@ export async function listLeadsRecent(
   limit = 50,
   options = {}
 ) {
-  const { signal } = options
-  const url = `${baseUrl}/api/v1/leads?limit=${encodeURIComponent(String(limit))}`
+  const { signal, offset = 0, status } = options
+  const params = new URLSearchParams()
+  params.set('limit', String(limit))
+  if (offset) params.set('offset', String(offset))
+  if (status) params.set('status', String(status))
+  const url = `${baseUrl}/api/v1/leads?${params}`
   const headers = { Accept: 'application/json' }
   if (token) headers.Authorization = `Bearer ${token}`
   const res = await fetch(url, { method: 'GET', headers, signal })
